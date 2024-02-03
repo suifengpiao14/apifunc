@@ -82,17 +82,7 @@ func TestAPIMemory(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	capi, err := apifunc.NewApiCompiled(ctx, api)
-	if err != nil {
-		panic(err)
-	}
-
-	source, err := apifunc.MakeSource(sourceIdentifer, apifunc.PROVIDER_SQL, sourceConfig)
-	if err != nil {
-		panic(err)
-	}
-
-	err = capi.RegisterSource(source)
+	capi, err := apifunc.NewApiCompiled(api)
 	if err != nil {
 		panic(err)
 	}

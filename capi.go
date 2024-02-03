@@ -86,7 +86,7 @@ type apiCompiled struct {
 	_tormStream *stream.Stream // sql stream
 }
 
-func NewApiCompiled(ctx context.Context, api *Setting) (capi *apiCompiled, err error) {
+func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 	apiName := fmt.Sprintf("%s_%s", api.Method, api.Route)
 	capi = &apiCompiled{
 		Method:     api.Method,
@@ -116,21 +116,21 @@ func NewApiCompiled(ctx context.Context, api *Setting) (capi *apiCompiled, err e
 		capi.template.TPL = strings.TrimSpace(fmt.Sprintf("%s\n%s", capi.template.TPL, templateSourceSetting.Templates))
 
 		// 注册资源
-		s := templateSourceSetting.Source
-		if s.Provider == nil {
-			s, err = MakeSource(s.Identifer, s.Type, s.Config)
+		source := templateSourceSetting.Source
+		if source.Provider == nil {
+			source, err = MakeSource(source.Identifer, source.Type, source.Config)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		err = capi.sourcePool.RegisterSource(s)
+		err = capi.sourcePool.RegisterSource(source)
 		if err != nil {
 			return nil, err
 		}
 		//注册模板资源关联关系
 		definedNames := strings.Split(strings.TrimPrefix(t.DefinedTemplates(), "; defined templates are: "), ",") //"; defined templates are: " 为固定字符串
-		err = capi.SetTemplateDependSource(s.Identifer, definedNames...)
+		err = capi.setTemplateDependSource(source.Identifer, definedNames...)
 		if err != nil {
 			return nil, err
 		}
@@ -164,22 +164,13 @@ func NewApiCompiled(ctx context.Context, api *Setting) (capi *apiCompiled, err e
 }
 
 // RelationTemplateAndSource 设置模版依赖的资源
-func (capi *apiCompiled) SetTemplateDependSource(sourceIdentifer string, templateIdentifers ...string) (err error) {
+func (capi *apiCompiled) setTemplateDependSource(sourceIdentifer string, templateIdentifers ...string) (err error) {
 	for _, tplName := range templateIdentifers {
 		tplName = strings.TrimSpace(tplName)
 		err = capi.sourcePool.AddTemplateIdentiferRelation(tplName, sourceIdentifer)
 		if err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-// RegisterSource 注册所有可能使用到的资源
-func (capi *apiCompiled) RegisterSource(s Source) (err error) {
-	err = capi.sourcePool.RegisterSource(s)
-	if err != nil {
-		return err
 	}
 	return nil
 }
