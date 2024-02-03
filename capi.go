@@ -9,10 +9,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/apifunc/apifunctemplate"
 	"github.com/suifengpiao14/apifunc/provider"
-	"github.com/suifengpiao14/jsonschemaline"
+	"github.com/suifengpiao14/lineschema"
 	"github.com/suifengpiao14/stream"
 	"github.com/suifengpiao14/stream/packet"
 	"github.com/suifengpiao14/stream/packet/lineschemapacket"
+	"github.com/suifengpiao14/torm"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -26,7 +27,7 @@ const (
 	CONTEXT_KEY_STORAGE = ContextKeyType(VARIABLE_STORAGE)
 )
 
-//ExecSouceFn 执行资源函数
+// ExecSouceFn 执行资源函数
 type ExecSouceFn func(ctx context.Context, identify string, input []byte) (out []byte, err error)
 
 type InjectObject struct {
@@ -58,7 +59,7 @@ func (s Setting) PackSchema() (lineschema string) {
 	return s.ResponseLineschema
 }
 
-//TemplateSourceSetting 模板和执行器之间存在确定关系，在配置中体现, 同一个TemplateSourceSetting 下template 内的define 共用相同资源
+// TemplateSourceSetting 模板和执行器之间存在确定关系，在配置中体现, 同一个TemplateSourceSetting 下template 内的define 共用相同资源
 type TemplateSourceSetting struct {
 	Source    Source `json:"source"`
 	Templates string `json:"templates"`
@@ -71,11 +72,11 @@ type apiCompiled struct {
 	inputDefaultJson  string
 	inputSchema       *gojsonschema.JSONLoader
 	inputConvertPath  string
-	inputLineSchema   *jsonschemaline.Jsonschemaline
+	inputLineSchema   *lineschema.Lineschema
 	outputDefaultJson string
 	outputSchema      *gojsonschema.JSONLoader
 	outputConvertPath string
-	outputLineSchema  *jsonschemaline.Jsonschemaline
+	outputLineSchema  *lineschema.Lineschema
 	BusinessLogicFn   stream.HandlerFn // 业务处理函数
 	sourcePool        *SourcePool
 	template          *apifunctemplate.ApifuncTemplate
@@ -94,53 +95,10 @@ func NewApiCompiled(ctx context.Context, api *Setting) (capi *apiCompiled, err e
 		template: &apifunctemplate.ApifuncTemplate{
 			Template: apifunctemplate.NewTemplate(),
 		},
-		_stream:     stream.NewStream(apiName, api.errorHandler),
-		_tormStream: stream.NewStream(fmt.Sprintf("torm_%s", apiName), nil),
-	}
-	if api.RequestLineschema != "" {
-		inputLineschema, err := jsonschemaline.ParseJsonschemaline(api.RequestLineschema)
-		if err != nil {
-			err = errors.WithMessagef(err, "makeApiCompiled.ParseJsonschemaline.InputLineSchema,route:%s", api.Route)
-			return nil, err
-		}
-		capi.inputLineSchema = inputLineschema
-		inputSchema, err := inputLineschema.JsonSchema()
-		if err != nil {
-			err = errors.WithMessagef(err, "makeApiCompiled.JsonSchema.InputLineSchema,route:%s", api.Route)
-			return nil, err
-		}
-		inputSchemaLoader := gojsonschema.NewStringLoader(string(inputSchema))
-		capi.inputSchema = &inputSchemaLoader
-		defaultInputJson, err := jsonschemaline.ParseDefaultJson(*inputLineschema)
-		if err != nil {
-			err = errors.WithMessagef(err, "makeApiCompiled.ParseDefaultJson.InputLineSchema,route:%s", api.Route)
-			return nil, err
-		}
-		capi.inputDefaultJson = defaultInputJson.Json
-		capi.inputConvertPath = api.InputConvertPath
-	}
-
-	if api.ResponseLineschema != "" {
-		outputLineschema, err := jsonschemaline.ParseJsonschemaline(api.ResponseLineschema)
-		if err != nil {
-			err = errors.WithMessagef(err, "makeApiCompiled.ParseJsonschemaline.OutputLineSchema,route:%s", api.Route)
-			return nil, err
-		}
-		capi.outputLineSchema = outputLineschema
-		outputSchema, err := outputLineschema.JsonSchema()
-		if err != nil {
-			err = errors.WithMessagef(err, "makeApiCompiled.JsonSchema.OutputLineSchema,route:%s", api.Route)
-			return nil, err
-		}
-		outputSchemaLoader := gojsonschema.NewStringLoader(string(outputSchema))
-		capi.outputSchema = &outputSchemaLoader
-		defaultOutputJson, err := jsonschemaline.ParseDefaultJson(*outputLineschema)
-		if err != nil {
-			err = errors.WithMessagef(err, "makeApiCompiled.ParseDefaultJson.OutputLineSchema,route:%s", api.Route)
-			return nil, err
-		}
-		capi.outputDefaultJson = defaultOutputJson.Json
-		capi.outputConvertPath = api.OutputConvertPath
+		_stream:           stream.NewStream(apiName, api.errorHandler),
+		_tormStream:       stream.NewStream(fmt.Sprintf("torm_%s", apiName), nil),
+		inputConvertPath:  api.InputConvertPath,
+		outputConvertPath: api.OutputConvertPath,
 	}
 
 	for _, templateSourceSetting := range api.TemplateSourceSettings {
@@ -205,7 +163,7 @@ func NewApiCompiled(ctx context.Context, api *Setting) (capi *apiCompiled, err e
 	return capi, nil
 }
 
-//RelationTemplateAndSource 设置模版依赖的资源
+// RelationTemplateAndSource 设置模版依赖的资源
 func (capi *apiCompiled) SetTemplateDependSource(sourceIdentifer string, templateIdentifers ...string) (err error) {
 	for _, tplName := range templateIdentifers {
 		tplName = strings.TrimSpace(tplName)
@@ -217,7 +175,7 @@ func (capi *apiCompiled) SetTemplateDependSource(sourceIdentifer string, templat
 	return nil
 }
 
-//RegisterSource 注册所有可能使用到的资源
+// RegisterSource 注册所有可能使用到的资源
 func (capi *apiCompiled) RegisterSource(s Source) (err error) {
 	err = capi.sourcePool.RegisterSource(s)
 	if err != nil {
@@ -236,7 +194,7 @@ func (capi *apiCompiled) Run(ctx context.Context, inputJson string) (out string,
 	return out, nil
 }
 
-//ExecSQLTPL 执行SQL语句
+// ExecSQLTPL 执行SQL语句
 func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input []byte) (out []byte, err error) {
 	volume := apifunctemplate.VolumeMap{}
 	if len(input) > 0 {
@@ -245,14 +203,11 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 			return nil, err
 		}
 	}
-	tplOut, volumeI, err := capi.template.Exec(tplName, &volume)
+	sqlStr, _, _, err := torm.GetSQLFromTemplate(capi.template.Template, tplName, &volume)
 	if err != nil {
 		return nil, err
 	}
-	sqlStr, err := apifunctemplate.ToSQL(tplOut, volumeI.ToMap())
-	if err != nil {
-		return nil, err
-	}
+
 	prov, err := capi.sourcePool.GetProviderByTemplateIdentifer(tplName)
 	if err != nil {
 		return nil, err
