@@ -10,7 +10,7 @@ require (
 	github.com/rs/xid v1.5.0
 	github.com/suifengpiao14/lineschema v0.0.33
 	github.com/suifengpiao14/logchan/v2 v2.0.22
-	github.com/suifengpiao14/stream v0.0.44
+	github.com/suifengpiao14/stream v0.0.46
 	github.com/suifengpiao14/tengolib v0.0.10
 	github.com/suifengpiao14/torm v0.0.25
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -48,23 +48,24 @@ require (
 	github.com/suifengpiao14/apihandler v0.0.71 // indirect
 	github.com/suifengpiao14/cudevent v0.0.13 // indirect
 	github.com/suifengpiao14/funcs v0.0.17 // indirect
-	github.com/suifengpiao14/gjsonmodifier v0.1.10 // indirect
+	github.com/suifengpiao14/gjsonmodifier v0.2.2 // indirect
 	github.com/suifengpiao14/httpraw v0.0.6 // indirect
 	github.com/suifengpiao14/kvstruct v0.0.14 // indirect
 	github.com/suifengpiao14/sdkgolib v0.0.22 // indirect
-	github.com/suifengpiao14/sqlexec v0.0.11 // indirect
-	github.com/suifengpiao14/sqlplus v0.0.10 // indirect
-	github.com/tidwall/gjson v1.17.0 // indirect
+	github.com/suifengpiao14/sqlexec v0.0.15 // indirect
+	github.com/suifengpiao14/sqlplus v0.0.12 // indirect
+	github.com/suifengpiao14/sshmysql v0.0.1 // indirect
+	github.com/tidwall/gjson v1.17.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
-	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
