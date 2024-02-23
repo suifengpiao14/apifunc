@@ -92,9 +92,9 @@ func TestAPIMemory(t *testing.T) {
 	})
 	container.RegisterAPI(capi)
 
-	routeCapi, ok := container.GetCApi(route, method)
-	if !ok {
-		panic(ok)
+	routeCapi, err := container.GetCApi(route, method)
+	if err != nil {
+		panic(err)
 	}
 
 	inputJson := `{"pageIndex":"0","pageSize":"20"}`

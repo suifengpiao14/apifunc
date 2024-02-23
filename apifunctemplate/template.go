@@ -105,11 +105,6 @@ func (to *TemplateOut) ToSQL(args ...tengo.Object) (sqlObj tengo.Object, err err
 //TemplateFuncMap 外部需要增加模板自定义函数时,在初始化模板前,设置该变量即可
 var TemplateFuncMap = make([]template.FuncMap, 0)
 
-type ApifuncTemplate struct {
-	Template *template.Template
-	TPL      string
-}
-
 func NewTemplate() (t *template.Template) {
 	t = template.New("").Funcs(TemplatefuncMapSQL).Funcs(sprig.TxtFuncMap())
 	for _, fnMap := range TemplateFuncMap {
@@ -118,16 +113,10 @@ func NewTemplate() (t *template.Template) {
 	return t
 }
 
-func (t *ApifuncTemplate) TypeName() string {
-	return "template"
-}
-func (t *ApifuncTemplate) String() string {
-	return t.TPL
-}
-
-func (t *ApifuncTemplate) Exec(tplName string, volume VolumeInterface) (out string, changedVolume VolumeInterface, err error) {
+//ExecuteTemplate 执行模板
+func ExecuteTemplate(t template.Template, tplName string, volume VolumeInterface) (out string, changedVolume VolumeInterface, err error) {
 	var b bytes.Buffer
-	err = t.Template.ExecuteTemplate(&b, tplName, volume)
+	err = t.ExecuteTemplate(&b, tplName, volume)
 	if err != nil {
 		err = errors.WithStack(err)
 		return "", nil, err

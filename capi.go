@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/apifunc/apifunctemplate"
@@ -14,6 +15,7 @@ import (
 	"github.com/suifengpiao14/stream/packet"
 	"github.com/suifengpiao14/stream/packet/lineschemapacket"
 	"github.com/suifengpiao14/torm"
+	"github.com/tidwall/sjson"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -34,10 +36,11 @@ type InjectObject struct {
 	ExecSQLTPL ExecSouceFn
 }
 
-type DynamicLogicFn func(ctx context.Context, InjectObject InjectObject, input []byte) (out []byte, err error)
+type DynamicLogicFn func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error)
 
 // Setting 配置
 type Setting struct {
+	ApiName                string                  `json:"apiName"` // 接口名称
 	Method                 string                  `json:"method"`
 	Route                  string                  `json:"route"` // 路由,唯一
 	RequestLineschema      string                  `json:"requestLineschema"`
@@ -65,8 +68,41 @@ type TemplateSourceSetting struct {
 	Templates string `json:"templates"`
 }
 
+//GetTemplateNames 获取模板的define名称
+func GetTemplateNames(t *template.Template) (tplNames []string) {
+	tplNames = make([]string, 0)
+	for _, tmp := range t.Templates() {
+		tplNames = append(tplNames, tmp.Name())
+	}
+
+	return tplNames
+}
+
+// 对提取变量有意义，注释暂时保留，另外可以通过注释关联资源，避免关联信息分散，增强关联性，方便维护
+// func TemplateVariables(tmpl *template.Template) []string {
+// 	var variables []string
+// 	// 访问模板树的根节点
+// 	rootNodes := tmpl.Templates()
+// 	// 遍历模板树的根节点
+// 	for _, t := range rootNodes {
+// 		rootNode := t.Tree.Root
+// 		for _, node := range rootNode.Nodes {
+// 			fmt.Println(node.String())
+// 			// 检查节点类型是否为变量
+// 			if node.Type() == parse.NodeAction && len(node.String()) > 2 && node.String()[0] == '.' {
+// 				// 提取变量名称
+// 				variableName := node.String()[2:]
+// 				variables = append(variables, variableName)
+// 			}
+// 		}
+// 	}
+
+// 	return variables
+// }
+
 type apiCompiled struct {
 	context           context.Context
+	ApiName           string `json:"apiName"`
 	Route             string `json:"route"`
 	Method            string
 	inputDefaultJson  string
@@ -79,28 +115,37 @@ type apiCompiled struct {
 	outputLineSchema  *lineschema.Lineschema
 	BusinessLogicFn   DynamicLogicFn // 业务处理函数
 	sourcePool        *SourcePool
-	template          *apifunctemplate.ApifuncTemplate
+	template          *template.Template
 	_container        *Container
 
 	_stream     *stream.Stream //api stream
 	_tormStream *stream.Stream // sql stream
 }
 
+var ERROR_COMPILED_API = errors.New("compiled api error")
+
 func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
+	defer func() {
+		if err != nil {
+			err = errors.WithMessage(err, ERROR_COMPILED_API.Error())
+		}
+	}()
 	apiName := fmt.Sprintf("%s_%s", api.Method, api.Route)
 	capi = &apiCompiled{
-		Method:     api.Method,
-		Route:      api.Route,
-		sourcePool: NewSourcePool(),
-		template: &apifunctemplate.ApifuncTemplate{
-			Template: apifunctemplate.NewTemplate(),
-		},
+		ApiName:           api.ApiName,
+		Method:            api.Method,
+		Route:             api.Route,
+		sourcePool:        NewSourcePool(),
+		template:          apifunctemplate.NewTemplate(),
 		_stream:           stream.NewStream(apiName, api.errorHandler),
 		_tormStream:       stream.NewStream(fmt.Sprintf("torm_%s", apiName), nil),
 		inputConvertPath:  api.InputTransferPath,
 		outputConvertPath: api.OutputTransferPath,
 	}
 
+	allTplArr := make([]string, 0)
+
+	// 收集模板，注册资源，模板名称关联关系
 	for _, templateSourceSetting := range api.TemplateSourceSettings {
 		//注册模板
 		t := apifunctemplate.NewTemplate()
@@ -108,12 +153,7 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 		if err != nil {
 			return nil, err
 		}
-		capi.template.Template, err = capi.template.Template.AddParseTree(t.ParseName, t.Tree)
-		if err != nil {
-			return nil, err
-		}
-
-		capi.template.TPL = strings.TrimSpace(fmt.Sprintf("%s\n%s", capi.template.TPL, templateSourceSetting.Templates))
+		allTplArr = append(allTplArr, templateSourceSetting.Templates)
 
 		// 注册资源
 		source := templateSourceSetting.Source
@@ -128,21 +168,42 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 		if err != nil {
 			return nil, err
 		}
+		definedNames := GetTemplateNames(t)
 		//注册模板资源关联关系
-		definedNames := strings.Split(strings.TrimPrefix(t.DefinedTemplates(), "; defined templates are: "), ",") //"; defined templates are: " 为固定字符串
 		err = capi.setTemplateDependSource(source.Identifer, definedNames...)
 		if err != nil {
 			return nil, err
 		}
+	}
+	//注册模板
+	allTplArs := strings.Join(allTplArr, "\n")
+	capi.template, err = capi.template.Parse(allTplArs)
+	if err != nil {
+		return nil, err
+	}
+
+	err = lineschemapacket.RegisterLineschemaPacket(api)
+	if err != nil {
+		return nil, err
 	}
 
 	packetHandler := stream.NewPacketHandlers()
 	//验证、格式化 入参
 	lineschemaPacketHandlers, err := lineschemapacket.ServerpacketHandlers(api)
 	if err != nil {
+		err = errors.WithMessage(err, "lineschemapacket.ServerpacketHandlers")
 		return nil, err
 	}
 	packetHandler.Append(lineschemaPacketHandlers...)
+	packetHandler.Append(packet.NewFuncPacketHandler(func(ctx context.Context, input []byte) (newCtx context.Context, out []byte, err error) {
+		path := fmt.Sprintf("%s.input", api.ApiName) // 补充命名空间
+		out, err = sjson.SetRawBytes([]byte{}, path, input)
+		if err != nil {
+			return nil, nil, err
+		}
+		return ctx, out, nil
+	}, nil))
+
 	//转换为代码中期望的数据格式
 	transferHandler := packet.NewTransferPacketHandler(api.InputTransferPath, api.OutputTransferPath)
 	packetHandler.Append(transferHandler)
@@ -194,7 +255,7 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 			return nil, err
 		}
 	}
-	sqlStr, _, _, err := torm.GetSQLFromTemplate(capi.template.Template, tplName, &volume)
+	sqlStr, _, _, err := torm.GetSQLFromTemplate(capi.template, tplName, &volume)
 	if err != nil {
 		return nil, err
 	}
