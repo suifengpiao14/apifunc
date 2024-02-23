@@ -69,9 +69,9 @@ func TestAPIMemory(t *testing.T) {
 		   		`,
 		   		PostScript: ``,
 		   		AfterEvent: ``, */
-		TemplateSourceSettings: []apifunc.TemplateSourceSetting{
+		TemplateSourceSettings: []apifunc.Torm{
 			{
-				Templates: tplStr,
+				Tpl: tplStr,
 				Source: apifunc.Source{
 					Identifer: sourceIdentifer,
 					Type:      apifunc.PROVIDER_SQL,
