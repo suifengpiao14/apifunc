@@ -43,8 +43,8 @@ type Setting struct {
 	RequestLineschema      string                  `json:"requestLineschema"`
 	ResponseLineschema     string                  `json:"responseLineschema"`
 	TemplateSourceSettings []TemplateSourceSetting `json:"templateSourceSetting"` // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
-	InputConvertPath       string                  `json:"inputConvertPath"`      // 输入数据转换器(由http请求数据转换为serviceFn中需要的格式,减少ServiceFn 中体力劳动)
-	OutputConvertPath      string                  `json:"outputConvertPath"`     // 输出数据转换器(由ServiceFn输出数据转换为http响应数据,减少ServiceFn 中体力劳动)
+	InputTransferPath      string                  `json:"inputConvertPath"`      // 输入数据转换器(由http请求数据转换为serviceFn中需要的格式,减少ServiceFn 中体力劳动)
+	OutputTransferPath     string                  `json:"outputConvertPath"`     // 输出数据转换器(由ServiceFn输出数据转换为http响应数据,减少ServiceFn 中体力劳动)
 	BusinessLogicFn        DynamicLogicFn
 	errorHandler           stream.ErrorHandler
 }
@@ -77,7 +77,7 @@ type apiCompiled struct {
 	outputSchema      *gojsonschema.JSONLoader
 	outputConvertPath string
 	outputLineSchema  *lineschema.Lineschema
-	BusinessLogicFn   stream.HandlerFn // 业务处理函数
+	BusinessLogicFn   DynamicLogicFn // 业务处理函数
 	sourcePool        *SourcePool
 	template          *apifunctemplate.ApifuncTemplate
 	_container        *Container
@@ -97,8 +97,8 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 		},
 		_stream:           stream.NewStream(apiName, api.errorHandler),
 		_tormStream:       stream.NewStream(fmt.Sprintf("torm_%s", apiName), nil),
-		inputConvertPath:  api.InputConvertPath,
-		outputConvertPath: api.OutputConvertPath,
+		inputConvertPath:  api.InputTransferPath,
+		outputConvertPath: api.OutputTransferPath,
 	}
 
 	for _, templateSourceSetting := range api.TemplateSourceSettings {
@@ -144,7 +144,7 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 	}
 	packetHandler.Append(lineschemaPacketHandlers...)
 	//转换为代码中期望的数据格式
-	transferHandler := packet.NewTransferPacketHandler(api.InputConvertPath, api.OutputConvertPath)
+	transferHandler := packet.NewTransferPacketHandler(api.InputTransferPath, api.OutputTransferPath)
 	packetHandler.Append(transferHandler)
 	//生成注入函数
 	injectObject := InjectObject{}

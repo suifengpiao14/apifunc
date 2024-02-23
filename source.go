@@ -134,12 +134,17 @@ func (p *SourcePool) AddTemplateIdentiferRelation(templateIdentifer string, sour
 	return nil
 }
 
-func (p *SourcePool) GetProviderBySourceIdentifer(sourceIdentifer string) (sourceProvider providerI, err error) {
-	source, ok := p.sourceMap[sourceIdentifer]
+func (p *SourcePool) GetBySourceIdentifer(sourceIdentifer string) (source *Source, err error) {
+	sourceO, ok := p.sourceMap[sourceIdentifer]
 	if !ok {
 		err = errors.Errorf("not found source by source identifier: %s", sourceIdentifer)
 		return nil, err
 	}
+	return &sourceO, nil
+}
+func (p *SourcePool) GetProviderBySourceIdentifer(sourceIdentifer string) (sourceProvider providerI, err error) {
+	source, err := p.GetBySourceIdentifer(sourceIdentifer)
+
 	sourceProvider = source.Provider
 	return sourceProvider, nil
 }
