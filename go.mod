@@ -13,7 +13,7 @@ require (
 	github.com/suifengpiao14/stream v0.0.46
 	github.com/suifengpiao14/tengolib v0.0.10
 	github.com/suifengpiao14/torm v0.0.25
-	github.com/tidwall/sjson v1.2.5
+	github.com/tidwall/gjson v1.17.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gorm.io/gorm v1.25.5
 )
@@ -56,9 +56,9 @@ require (
 	github.com/suifengpiao14/sqlexec v0.0.15 // indirect
 	github.com/suifengpiao14/sqlplus v0.0.12 // indirect
 	github.com/suifengpiao14/sshmysql v0.0.1 // indirect
-	github.com/tidwall/gjson v1.17.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
