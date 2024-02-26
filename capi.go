@@ -16,6 +16,7 @@ import (
 	"github.com/suifengpiao14/stream/packet/lineschemapacket"
 	"github.com/suifengpiao14/torm"
 	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -33,13 +34,20 @@ const (
 type ExecSouceFn func(ctx context.Context, identify string, input []byte) (out []byte, err error)
 
 type InjectObject struct {
-	ExecSQLTPL     ExecSouceFn
-	vocabularyJson string // 记录vocabulary
+	ExecSQLTPL   ExecSouceFn
+	vocabularies Vocabularies // 记录vocabulary
 }
 
-func (injectObject InjectObject) Transfer(fullname string, input []byte) (out []byte, err error) {
-	gjson.Get(injectObject.vocabularyJson, fullname).String()
-	return
+func (injectObject InjectObject) ConvertInput(namespace string, input []byte) (out []byte) {
+	vocabularies := injectObject.vocabularies.GetByParent(namespace)
+	vocabularies.FilterEmpty()
+	gjsonpath := vocabularies.Transfers().Reverse().String()
+	outStr := gjson.GetBytes(input, gjsonpath).String()
+	if outStr != "" {
+		outStr = gjson.Get(outStr, namespace).String()
+	}
+	out = []byte(outStr)
+	return out
 
 }
 
@@ -47,16 +55,16 @@ type DynamicLogicFn func(ctx context.Context, injectObject InjectObject, input [
 
 // Setting 配置
 type Setting struct {
-	ApiName                string `json:"apiName"` // 接口名称
-	Method                 string `json:"method"`
-	Route                  string `json:"route"` // 路由,唯一
-	RequestLineschema      string `json:"requestLineschema"`
-	ResponseLineschema     string `json:"responseLineschema"`
-	TemplateSourceSettings []Torm `json:"templateSourceSetting"` // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
-	InputTransferPath      string `json:"inputConvertPath"`      // 输入数据转换器(由http请求数据转换为serviceFn中需要的格式,减少ServiceFn 中体力劳动)
-	OutputTransferPath     string `json:"outputConvertPath"`     // 输出数据转换器(由ServiceFn输出数据转换为http响应数据,减少ServiceFn 中体力劳动)
-	BusinessLogicFn        DynamicLogicFn
-	errorHandler           stream.ErrorHandler
+	ApiName            string `json:"apiName"` // 接口名称
+	Method             string `json:"method"`
+	Route              string `json:"route"` // 路由,唯一
+	RequestLineschema  string `json:"requestLineschema"`
+	ResponseLineschema string `json:"responseLineschema"`
+	Torms              Torms  `json:"torms"`             // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
+	InputTransferPath  string `json:"inputConvertPath"`  // 输入数据转换器(由http请求数据转换为serviceFn中需要的格式,减少ServiceFn 中体力劳动)
+	OutputTransferPath string `json:"outputConvertPath"` // 输出数据转换器(由ServiceFn输出数据转换为http响应数据,减少ServiceFn 中体力劳动)
+	BusinessLogicFn    DynamicLogicFn
+	errorHandler       stream.ErrorHandler
 }
 
 func (s Setting) GetRoute() (mehtod string, path string) {
@@ -77,10 +85,52 @@ type Torm struct {
 	InputVocabularies  Vocabularies `json:"inputVocabularies"`
 	OutputVocabularies Vocabularies `json:"outputVocabularies"`
 }
-type Vocabularies []Vocabulary
-type Vocabulary struct {
-	Fullname   string `json:"fullname"`
-	Dictionary string `json:"dictionary"`
+
+type Torms []Torm
+
+func (ts *Torms) Add(subTorms ...Torm) {
+	if *ts == nil {
+		*ts = make(Torms, 0)
+	}
+	*ts = append(*ts, subTorms...)
+}
+func (ts *Torms) Vocabularies() (vocabularies Vocabularies) {
+	vocabularies = make(Vocabularies, 0)
+	for _, t := range *ts {
+		vocabularies.AddReplace(t.InputVocabularies...)
+		vocabularies.AddReplace(t.OutputVocabularies...)
+	}
+
+	return vocabularies
+}
+
+// NamespaceInput 从标准库转换过来的命名空间
+func (t Torm) NamespaceInput() (namespaceInput string) {
+	return fmt.Sprintf("%s.input", t.Name)
+}
+
+// NamespaceInput 返回到标准库时，增加的命名空间
+func (t Torm) NamespaceOutput() (namespaceOutput string) {
+	return fmt.Sprintf("%s.output", t.Name)
+}
+
+//FormatInput 从标准输入中获取数据
+func (t Torm) FormatInput(data []byte) (input string) {
+	gjsonPath := t.InputVocabularies.Transfers().Reverse().String()
+	input = gjson.GetBytes(data, gjsonPath).String()
+	input = gjson.Get(input, t.NamespaceInput()).String()
+	return input
+}
+
+//FormatOutput 格式化输出标准数据
+func (t Torm) FormatOutput(data []byte) (output []byte) {
+	gjsonPath := t.OutputVocabularies.Transfers().String()
+	output = []byte(gjson.GetBytes(data, gjsonPath).String())
+	output, err := sjson.SetRawBytes(output, t.NamespaceOutput(), output)
+	if err != nil {
+		panic(err)
+	}
+	return output
 }
 
 // GetTemplateNames 获取模板的define名称
@@ -161,17 +211,17 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 	allTplArr := make([]string, 0)
 
 	// 收集模板，注册资源，模板名称关联关系
-	for _, templateSourceSetting := range api.TemplateSourceSettings {
+	for _, torm := range api.Torms {
 		//注册模板
 		t := apifunctemplate.NewTemplate()
-		t, err := t.Parse(templateSourceSetting.Tpl)
+		t, err := t.Parse(torm.Tpl)
 		if err != nil {
 			return nil, err
 		}
-		allTplArr = append(allTplArr, templateSourceSetting.Tpl)
+		allTplArr = append(allTplArr, torm.Tpl)
 
 		// 注册资源
-		source := templateSourceSetting.Source
+		source := torm.Source
 		if source.Provider == nil {
 			source, err = MakeSource(source.Identifer, source.Type, source.Config)
 			if err != nil {
@@ -210,8 +260,9 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 		return nil, err
 	}
 	packetHandler.Append(lineschemaPacketHandlers...)
-	namespace := fmt.Sprintf("%s.input", api.ApiName) // 补充命名空间
-	packetHandler.Append(packet.NewJsonAddTrimNamespacePacket(namespace))
+	namespaceAdd := fmt.Sprintf("%s.input", api.ApiName)   // 补充命名空间
+	namespaceTrim := fmt.Sprintf("%s.output", api.ApiName) // 去除命名空间
+	packetHandler.Append(packet.NewJsonAddTrimNamespacePacket(namespaceAdd, namespaceTrim))
 
 	//转换为代码中期望的数据格式
 	transferHandler := packet.NewTransferPacketHandler(api.InputTransferPath, api.OutputTransferPath)
@@ -221,6 +272,7 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 	injectObject.ExecSQLTPL = func(ctx context.Context, tplName string, input []byte) (out []byte, err error) {
 		return capi.ExecSQLTPL(ctx, tplName, input)
 	}
+	injectObject.vocabularies = api.Torms.Vocabularies()
 	//注入逻辑处理函数
 	if api.BusinessLogicFn != nil {
 		packetHandler.Append(packet.NewFuncPacketHandler(func(ctx context.Context, input []byte) (newCtx context.Context, out []byte, err error) {
@@ -263,6 +315,10 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		if err != nil {
 			return nil, err
 		}
+	}
+	status, ok := volume["Status"]//HsbRemark
+	if ok {
+		volume["Status"] = int(status.(float64))
 	}
 	sqlStr, _, _, err := torm.GetSQLFromTemplate(capi.template, tplName, &volume)
 	if err != nil {

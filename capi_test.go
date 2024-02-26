@@ -69,7 +69,7 @@ func TestAPIMemory(t *testing.T) {
 		   		`,
 		   		PostScript: ``,
 		   		AfterEvent: ``, */
-		TemplateSourceSettings: []apifunc.Torm{
+		Torms: []apifunc.Torm{
 			{
 				Tpl: tplStr,
 				Source: apifunc.Source{
