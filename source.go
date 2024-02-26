@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/apifunc/provider"
+	"github.com/suifengpiao14/sqlexec/sqlexecparser"
 )
 
 const (
@@ -70,6 +71,7 @@ type Source struct {
 	Type      string    `json:"type"`
 	Config    string    `json:"config"`
 	Provider  providerI `json:"-"`
+	DDL       string    `json:"ddl"`
 }
 
 type providerI interface {
@@ -94,11 +96,12 @@ func (m *MemoryDB) ExecOrQueryContext(ctx context.Context, sql string) (out stri
 }
 
 //MakeSource 创建常规资源,方便外部统一调用
-func MakeSource(identifer string, typ string, config string) (s Source, err error) {
+func MakeSource(identifer string, typ string, config string, ddl string) (s Source, err error) {
 	s = Source{
 		Identifer: identifer,
 		Type:      typ,
 		Config:    config,
+		DDL:       ddl,
 	}
 	var providerImp providerI
 	switch s.Type {
@@ -106,6 +109,16 @@ func MakeSource(identifer string, typ string, config string) (s Source, err erro
 		providerImp, err = provider.NewDBProvider(s.Config)
 		if err != nil {
 			return s, err
+		}
+		if s.DDL != "" { // 注册关联表结构
+			dbname, err := sqlexecparser.GetDBNameFromDSN(s.Config)
+			if err != nil {
+				return s, err
+			}
+			err = sqlexecparser.RegisterTableByDDL(dbname, s.DDL)
+			if err != nil {
+				return s, err
+			}
 		}
 		//todo curl , bin 提供者实现
 	}

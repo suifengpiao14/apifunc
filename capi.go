@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"github.com/suifengpiao14/apifunc/apifunctemplate"
 	"github.com/suifengpiao14/apifunc/provider"
 	"github.com/suifengpiao14/lineschema"
 	"github.com/suifengpiao14/stream"
@@ -201,7 +200,7 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 		Method:            api.Method,
 		Route:             api.Route,
 		sourcePool:        NewSourcePool(),
-		template:          apifunctemplate.NewTemplate(),
+		template:          torm.NewTemplate(),
 		_stream:           stream.NewStream(apiName, api.errorHandler),
 		_tormStream:       stream.NewStream(fmt.Sprintf("torm_%s", apiName), nil),
 		inputConvertPath:  api.InputTransferPath,
@@ -211,19 +210,19 @@ func NewApiCompiled(api *Setting) (capi *apiCompiled, err error) {
 	allTplArr := make([]string, 0)
 
 	// 收集模板，注册资源，模板名称关联关系
-	for _, torm := range api.Torms {
+	for _, orm := range api.Torms {
 		//注册模板
-		t := apifunctemplate.NewTemplate()
-		t, err := t.Parse(torm.Tpl)
+		t := torm.NewTemplate()
+		t, err := t.Parse(orm.Tpl)
 		if err != nil {
 			return nil, err
 		}
-		allTplArr = append(allTplArr, torm.Tpl)
+		allTplArr = append(allTplArr, orm.Tpl)
 
 		// 注册资源
-		source := torm.Source
+		source := orm.Source
 		if source.Provider == nil {
-			source, err = MakeSource(source.Identifer, source.Type, source.Config)
+			source, err = MakeSource(source.Identifer, source.Type, source.Config, source.DDL)
 			if err != nil {
 				return nil, err
 			}
@@ -309,16 +308,15 @@ func (capi *apiCompiled) Run(ctx context.Context, inputJson string) (out string,
 
 // ExecSQLTPL 执行SQL语句
 func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input []byte) (out []byte, err error) {
-	volume := apifunctemplate.VolumeMap{}
+	volume := torm.VolumeMap{}
 	if len(input) > 0 {
-		err = json.Unmarshal(input, &volume)
+		m := make(map[string]any)
+		err = json.Unmarshal(input, &m)
 		if err != nil {
 			return nil, err
 		}
-	}
-	status, ok := volume["Status"]//HsbRemark
-	if ok {
-		volume["Status"] = int(status.(float64))
+		convertFloatsToInt(m) // json.Unmarshal 出来后int 转为float64了，需要尝试优先使用int
+		volume = torm.VolumeMap(m)
 	}
 	sqlStr, _, _, err := torm.GetSQLFromTemplate(capi.template, tplName, &volume)
 	if err != nil {
@@ -349,4 +347,19 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		return nil, err
 	}
 	return out, nil
+}
+
+func convertFloatsToInt(data map[string]interface{}) {
+	for key, value := range data {
+		switch v := value.(type) {
+		case float64:
+			// 尝试将 float64 转换为 int
+			if float64(int(v)) == v {
+				data[key] = int(v)
+			}
+		case map[string]interface{}:
+			// 递归处理嵌套的 map
+			convertFloatsToInt(v)
+		}
+	}
 }

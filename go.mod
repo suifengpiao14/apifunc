@@ -54,7 +54,7 @@ require (
 	github.com/suifengpiao14/httpraw v0.0.6 // indirect
 	github.com/suifengpiao14/kvstruct v0.0.14 // indirect
 	github.com/suifengpiao14/sdkgolib v0.0.22 // indirect
-	github.com/suifengpiao14/sqlexec v0.0.15 // indirect
+	github.com/suifengpiao14/sqlexec v0.0.16 // indirect
 	github.com/suifengpiao14/sqlplus v0.0.12 // indirect
 	github.com/suifengpiao14/sshmysql v0.0.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
