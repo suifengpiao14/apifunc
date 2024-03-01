@@ -6,8 +6,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/suifengpiao14/logchan/v2 v2.0.22
 	github.com/suifengpiao14/pathtransfer v0.0.3
-	github.com/suifengpiao14/sqlexec v0.0.21
-	github.com/suifengpiao14/stream v0.0.50
+	github.com/suifengpiao14/sqlexec v0.0.22
+	github.com/suifengpiao14/stream v0.0.51
 	github.com/suifengpiao14/tengolib v0.0.10
 	github.com/suifengpiao14/torm v0.0.25
 	github.com/tidwall/gjson v1.17.1
@@ -20,7 +20,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/ThreeDotsLabs/watermill v1.2.0 // indirect
 	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba // indirect
-	github.com/bytewatch/ddl-executor v0.0.0-20191006051259-3983fa694bf8 // indirect
 	github.com/casdoor/casdoor-go-sdk v0.29.1 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d5/tengo/v2 v2.16.1 // indirect
@@ -58,6 +57,7 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/suifengpiao14/apihandler v0.0.71 // indirect
 	github.com/suifengpiao14/cudevent v0.0.16 // indirect
+	github.com/suifengpiao14/ddl-executor v0.0.1 // indirect
 	github.com/suifengpiao14/funcs v0.0.18 // indirect
 	github.com/suifengpiao14/gjsonmodifier v0.2.2 // indirect
 	github.com/suifengpiao14/httpraw v0.0.6 // indirect
