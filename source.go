@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/apifunc/provider"
+	"github.com/suifengpiao14/sqlexec"
 	"github.com/suifengpiao14/sqlexec/sqlexecparser"
 )
 
@@ -110,12 +111,17 @@ func MakeSource(identifer string, typ string, config string, ddl string) (s Sour
 		if err != nil {
 			return s, err
 		}
-		if s.DDL != "" { // 注册关联表结构
-			dbname, err := sqlexecparser.GetDBNameFromDSN(s.Config)
+		dbProvider, _ := providerImp.(*provider.DBProvider)
+		db := dbProvider.GetDB()
+		if s.DDL == "" {
+			s.DDL, err = sqlexec.GetDDL(db)
 			if err != nil {
+				err = errors.WithMessagef(err, "config:%s", config)
 				return s, err
 			}
-			err = sqlexecparser.RegisterTableByDDL(dbname, s.DDL)
+		}
+		if s.DDL != "" { // 注册关联表结构
+			err = sqlexecparser.RegisterTableByDDL(s.DDL)
 			if err != nil {
 				return s, err
 			}

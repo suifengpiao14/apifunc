@@ -30,12 +30,12 @@ func (c *Container) RegisterAPI(capi *apiCompiled) {
 	c.lockCApi.Lock()
 	defer c.lockCApi.Unlock()
 	methods := make([]string, 0)
-	if capi.Method != "" {
-		methods = strings.Split(capi.Method, ",")
+	if capi._api.Method != "" {
+		methods = strings.Split(capi._api.Method, ",")
 	}
 	capi._container = c // 关联容器
 	for _, method := range methods {
-		key := apiMapKey(capi.Route, method)
+		key := apiMapKey(capi._api.Route, method)
 		c.apis[key] = capi
 	}
 }

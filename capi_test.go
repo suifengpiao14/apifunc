@@ -30,45 +30,29 @@ func TestAPIMemory(t *testing.T) {
 	MemoryDB.InOutMap[countSQL] = "6"
 
 	api := &apifunc.Setting{
-		Method: "post,get",
-		Route:  route,
-		RequestLineschema: `version=http://json-schema.org/draft-07/schema,id=input,direction=in
-		fullname=pageIndex,dst=pageIndex,format=number,required
-		fullname=pageSize,dst=pageSize,format=number,required`,
-		ResponseLineschema: `version=http://json-schema.org/draft-07/schema,id=output,direction=out
-		fullname=items[].content,src=PaginateOut.#.content,required
-		fullname=items[].createdAt,src=PaginateOut.#.created_at,required
-		fullname=items[].deletedAt,src=PaginateOut.#.deleted_at,required
-		fullname=items[].description,src=PaginateOut.#.description,required
-		fullname=items[].icon,src=PaginateOut.#.icon,required
-		fullname=items[].id,src=PaginateOut.#.id,required
-		fullname=items[].key,src=PaginateOut.#.key,required
-		fullname=items[].label,src=PaginateOut.#.label,required
-		fullname=items[].thumb,src=PaginateOut.#.thumb,required
-		fullname=items[].title,src=PaginateOut.#.title,required
-		fullname=items[].updatedAt,src=PaginateOut.#.updated_at,required
-		fullname=pageInfo.pageIndex,src=input.pageIndex,required
-		fullname=pageInfo.pageSize,src=input.pageSize,required
-		fullname=pageInfo.total,src=PaginateTotalOut,required`,
-		//{pageInfo:{pageIndex:input.pageIndex,pageSize:input.pageSize,total:PaginateTotalOut},items:{content:PaginateOut.#.content,createdAt:PaginateOut.#.created_at,deletedAt:PaginateOut.#.deleted_at}|@group}
-		/* 		PreScript: `
-		   		input:=storage.GetMemory()
-		   		input["Limit"]=int(input["pageSize"])
-		   		input["Offset"]=int(input["pageIndex"]*input["pageSize"])
-		   		`,
-		   		MainScript: `
-		   		input:=storage.GetMemory()
-		   		ctx:=storage.GetCtx()
-		   		PaginateTotalOut:=execSQLTPL(ctx,"PaginateTotal",input)
-		   		storage.SetRaw("PaginateTotalOut",PaginateTotalOut)
-		   		PaginateOut :="[]"
-		   		if PaginateTotalOut {
-		   		PaginateOut =execSQLTPL(ctx,"Paginate",input)
-		   		}
-		   		storage.SetRaw("PaginateOut",PaginateOut)
-		   		`,
-		   		PostScript: ``,
-		   		AfterEvent: ``, */
+		Api: apifunc.Api{
+			Method: "post,get",
+			Route:  route,
+			RequestLineschema: `version=http://json-schema.org/draft-07/schema,id=input,direction=in
+			fullname=pageIndex,dst=pageIndex,format=number,required
+			fullname=pageSize,dst=pageSize,format=number,required`,
+			ResponseLineschema: `version=http://json-schema.org/draft-07/schema,id=output,direction=out
+			fullname=items[].content,src=PaginateOut.#.content,required
+			fullname=items[].createdAt,src=PaginateOut.#.created_at,required
+			fullname=items[].deletedAt,src=PaginateOut.#.deleted_at,required
+			fullname=items[].description,src=PaginateOut.#.description,required
+			fullname=items[].icon,src=PaginateOut.#.icon,required
+			fullname=items[].id,src=PaginateOut.#.id,required
+			fullname=items[].key,src=PaginateOut.#.key,required
+			fullname=items[].label,src=PaginateOut.#.label,required
+			fullname=items[].thumb,src=PaginateOut.#.thumb,required
+			fullname=items[].title,src=PaginateOut.#.title,required
+			fullname=items[].updatedAt,src=PaginateOut.#.updated_at,required
+			fullname=pageInfo.pageIndex,src=input.pageIndex,required
+			fullname=pageInfo.pageSize,src=input.pageSize,required
+			fullname=pageInfo.total,src=PaginateTotalOut,required`,
+		},
+
 		Torms: []apifunc.Torm{
 			{
 				Tpl: tplStr,
