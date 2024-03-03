@@ -210,6 +210,14 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 		}
 	}()
 	apiName := fmt.Sprintf("%s_%s", setting.Api.Method, setting.Api.Route)
+	if len(setting.Api.Flow) == 0 {
+		setting.Api.Flow = DefaultAPIFlows()
+	}
+	for i := range setting.Torms {
+		if len(setting.Torms[i].Flow) == 0 {
+			setting.Torms[i].Flow = DefaultTormFlows()
+		}
+	}
 	capi = &apiCompiled{
 		_api:          setting.Api,
 		_Torms:        setting.Torms,
