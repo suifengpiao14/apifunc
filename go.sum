@@ -391,8 +391,8 @@ github.com/suifengpiao14/sqlplus v0.0.14 h1:72UI0IvG+NIzWX2ZERP8/H83VI6WSZaChFeJ
 github.com/suifengpiao14/sqlplus v0.0.14/go.mod h1:xhthEqLG1AY5DogiyITeT5ro1HpsXV0qIVtK9IbGZ2w=
 github.com/suifengpiao14/sshmysql v0.0.1 h1:A6bj4TLpTBpcTkPOuSZDrmhNeeiKELL1S1vcFAMvmZ4=
 github.com/suifengpiao14/sshmysql v0.0.1/go.mod h1:XqRYddwQ7Ek4anaf6/YwZYZt8owXxFk9w/Potae/fC8=
-github.com/suifengpiao14/stream v0.0.51 h1:ugCmIqJ/6a40aeYUwCAoDgKGNzel5hZGp2vlWS9XJ/8=
-github.com/suifengpiao14/stream v0.0.51/go.mod h1:bBFvSswBY0I/jXEI9gBf/x3aTw7T/NU4fxO9rfgSwL4=
+github.com/suifengpiao14/stream v0.0.53 h1:oA24RjLQ2QaOQqzoBYzkswaw4odOE+zBhLyrQbhCPq0=
+github.com/suifengpiao14/stream v0.0.53/go.mod h1:bBFvSswBY0I/jXEI9gBf/x3aTw7T/NU4fxO9rfgSwL4=
 github.com/suifengpiao14/tengolib v0.0.10 h1:poaTeDUbMAbxEDfMmovYbau0YR82AL3ZC6MeLjvknUY=
 github.com/suifengpiao14/tengolib v0.0.10/go.mod h1:luDCEAEdBW18ZMb0Yp/8c0j/K0L8V6zNibRTrORVG/g=
 github.com/suifengpiao14/torm v0.0.25 h1:Mw8sBU9f2es4tKw9zHsPRGRc8/NggpDLoqJ6eVseWNQ=

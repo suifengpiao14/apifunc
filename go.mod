@@ -7,7 +7,7 @@ require (
 	github.com/suifengpiao14/logchan/v2 v2.0.22
 	github.com/suifengpiao14/pathtransfer v0.0.3
 	github.com/suifengpiao14/sqlexec v0.0.22
-	github.com/suifengpiao14/stream v0.0.51
+	github.com/suifengpiao14/stream v0.0.53
 	github.com/suifengpiao14/tengolib v0.0.10
 	github.com/suifengpiao14/torm v0.0.25
 	github.com/tidwall/gjson v1.17.1
