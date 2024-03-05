@@ -1,0 +1,58 @@
+<?xml version="1.0" standalone="yes"?>
+<RECORDS>
+
+<RECORD>
+<template_id>GetByHsbRemark</template_id>
+<title>回收宝备注转获取闲鱼备注</title>
+<source_id>xyxz_manage_db</source_id>
+<tpl>{{define "GetByHsbRemark"}}
+select * from `t_xyxz_xy_cancel_remark_map` where  `Fhsb_remark`=:HsbRemark 
+{{if ne -1 .Status}}
+	and `Fstatus`=:Status
+{{end}}
+
+{{if .ExcludeId}}
+ and `Fid`!=:ExcludeId
+{{end}}
+
+ limit 0,1; {{end}}
+ </tpl>
+<pathTransfers>
+GetByHsbRemark.input.HsbRemark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fhsb_remark
+GetByHsbRemark.input.Status@int:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fstatus@int
+GetByHsbRemark.input.ExcludeId:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fid
+GetByHsbRemark.output.Fid:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fid
+GetByHsbRemark.output.Fhsb_remark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fhsb_remark
+GetByHsbRemark.output.Fxy_remark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fxy_remark
+GetByHsbRemark.output.Fpop_up_window:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fpop_up_window
+GetByHsbRemark.output.Fstatus:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fstatus
+GetByHsbRemark.output.Fneed_pic:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fneed_pic
+GetByHsbRemark.output.Fcan_relation_old_order_id:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fcan_relation_old_order_id
+GetByHsbRemark.output.Fauto_create_time:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fauto_create_time
+GetByHsbRemark.output.Fauto_update_time:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fauto_update_time
+</pathTransfers>
+<flows>
+</flows>
+</RECORD>
+
+<RECORD>
+<template_id>InsertHsbRemark</template_id>
+<title>新增回收宝备注</title>
+<source_id>xyxz_manage_db</source_id>
+<tpl>{{define "InsertHsbRemark"}} 
+insert into `t_xyxz_xy_cancel_remark_map` (`Fhsb_remark`,`Fxy_remark`,`Fpop_up_window`,`Fstatus`,`Fneed_pic`,`Fcan_relation_old_order_id`)values 
+(:FhsbRemark,:FxyRemark,:FpopUpWindow,:Fstatus,:Fneed_pic,:Fcan_relation_old_order_id); 
+{{end}}
+ </tpl>
+<pathTransfers>
+InsertHsbRemark.input.FhsbRemark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fhsb_remark
+InsertHsbRemark.input.FxyRemark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fxy_remark
+InsertHsbRemark.input.FpopUpWindow:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fpop_up_window
+InsertHsbRemark.input.Fstatus:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fstatus
+InsertHsbRemark.input.Fneed_pic:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fneed_pic
+InsertHsbRemark.input.Fcan_relation_old_order_id:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fcan_relation_old_order_id
+</pathTransfers>
+<flows>
+</flows>
+</RECORD>
+</RECORDS>

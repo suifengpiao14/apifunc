@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/suifengpiao14/pathtransfer"
+	"github.com/suifengpiao14/sqlexec"
+	"github.com/suifengpiao14/sshmysql"
 )
 
 type DependentJson string
@@ -73,10 +76,52 @@ type SourceModel struct {
 	ENV        string `json:"env"`
 	SourceType string `json:"sourceType"`
 	Config     string `json:"config"`
+	SSHConfig  string `json:"sshConfig"`
 	DDL        string `json:"ddl"` //SQL 类型，需要使用cudevent 库时需要配置DDL
 }
 
+const (
+	Source_Type_SQL  = "SQL"
+	Source_Type_CURL = "CURL"
+)
+
 type SourceModels []SourceModel
+
+//FillDDL 填充DDL
+func (ss *SourceModels) FillDDL() (err error) {
+	for i, sourceModel := range *ss {
+		if sourceModel.DDL != "" {
+			continue
+		}
+		switch strings.ToUpper(sourceModel.SourceType) {
+		case Source_Type_SQL:
+			c, err := sqlexec.JsonToDBConfig(sourceModel.Config)
+			if err != nil {
+				err = errors.WithMessagef(err, "sourceType:%s,config:%s", sourceModel.SourceType, sourceModel.Config)
+				return err
+			}
+			var sshConfig *sshmysql.SSHConfig
+			if sourceModel.SSHConfig != "" {
+				sshConfig, err = sshmysql.JsonToSSHConfig(sourceModel.Config)
+				if err != nil {
+					err = errors.WithMessagef(err, "sshConfig:%s", sourceModel.SSHConfig)
+					return err
+				}
+			}
+
+			exec := sqlexec.NewExecutorSQL(*c, sshConfig)
+
+			// 通过配置连接DB获取DDL
+			ddl, err := sqlexec.GetDDL(exec.GetDB())
+			if err != nil {
+				err = errors.WithMessagef(err, "DSN:%s", c.DSN)
+				return err
+			}
+			(*ss)[i].DDL = ddl
+		}
+	}
+	return nil
+}
 
 type TormModel struct {
 	TemplateID       string                    `json:"templateId"`

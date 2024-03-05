@@ -9,9 +9,9 @@ require (
 	github.com/suifengpiao14/logchan/v2 v2.0.22
 	github.com/suifengpiao14/packethandler v0.0.2
 	github.com/suifengpiao14/pathtransfer v0.0.4
-	github.com/suifengpiao14/sqlexec v0.0.24
+	github.com/suifengpiao14/sqlexec v0.0.27
+	github.com/suifengpiao14/sshmysql v0.0.3
 	github.com/suifengpiao14/stream v0.0.59
-	github.com/suifengpiao14/tengolib v0.0.10
 	github.com/suifengpiao14/torm v0.0.27
 	github.com/tidwall/gjson v1.17.1
 )
@@ -71,7 +71,6 @@ require (
 	github.com/suifengpiao14/lineschema v0.0.35 // indirect
 	github.com/suifengpiao14/sdkgolib v0.0.22 // indirect
 	github.com/suifengpiao14/sqlplus v0.0.16 // indirect
-	github.com/suifengpiao14/sshmysql v0.0.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect

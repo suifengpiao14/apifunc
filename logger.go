@@ -4,19 +4,10 @@ import (
 	"context"
 
 	"github.com/suifengpiao14/logchan/v2"
-	"github.com/suifengpiao14/tengolib/tengodb"
-	"github.com/suifengpiao14/tengolib/tengotemplate"
 )
 
 // 收集依赖包中的日志名称，实现封装细节(减少使用方明确引入本包依赖的包，隐藏细节)，同时方便统日志命名规则、方便集中查找管理
 /*****************************************统一管理日志start**********************************************/
-const (
-	LOG_INFO_EXEC_SQL     = tengodb.LOG_INFO_EXEC_SQL
-	LOG_INFO_SQL_TEMPLATE = tengotemplate.LOG_INFO_SQL_TEMPLATE
-)
-
-type LogInfoEXECSQL tengodb.LogInfoEXECSQL
-type LogInfoTemplateSQL tengotemplate.LogInfoTemplateSQL
 
 type LogInforInterface logchan.LogInforInterface
 

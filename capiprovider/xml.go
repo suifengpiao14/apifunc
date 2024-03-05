@@ -1,4 +1,4 @@
-package xmlprovider
+package capiprovider
 
 import (
 	"bytes"
@@ -54,6 +54,7 @@ type SourceRecord struct {
 	ENV        string `xml:"env"`
 	SourceType string `xml:"source_type"`
 	Config     string `xml:"config"`
+	SSHConfig  string `xml:"ssh_config"`
 	DDL        string `xml:"ddl"` //SQL 类型，需要使用cudevent 库时需要配置DDL
 }
 
@@ -111,8 +112,10 @@ func loadDataFromFile(rootDir string, patten string) (out [][]byte, err error) {
 	return out, nil
 }
 
-func LoadXmlDB(apiFileDir string, sourceFileDir string, tormFileDir string) (dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTemplateRecords TemplateRecords, err error) {
-	apiRecordAllFile, err := loadDataFromFile(apiFileDir, "**")
+//LoadXmlDB 从XML中加载数据
+func LoadXmlDB(env string, apiFileDir string, sourceFileDir string, tormFileDir string) (apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels, err error) {
+	apiRecords, sourceRecords, templateRecords := make(ApiRecords, 0), make(SourceRecords, 0), make(TemplateRecords, 0)
+	apiRecordAllFile, err := loadDataFromFile(apiFileDir, "**/*.xml")
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -125,11 +128,11 @@ func LoadXmlDB(apiFileDir string, sourceFileDir string, tormFileDir string) (dbA
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		dbApiRecords = append(dbApiRecords, table.Records...)
+		apiRecords = append(apiRecords, table.Records...)
 
 	}
 
-	sourceAllFile, err := loadDataFromFile(sourceFileDir, "**")
+	sourceAllFile, err := loadDataFromFile(sourceFileDir, "**/*.xml")
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -142,9 +145,11 @@ func LoadXmlDB(apiFileDir string, sourceFileDir string, tormFileDir string) (dbA
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		dbSourceRecords = append(dbSourceRecords, table.Records...)
+		sourceRecords = append(sourceRecords, table.Records...)
 	}
-	templateAllFile, err := loadDataFromFile(tormFileDir, "**")
+
+	sourceRecords = sourceRecords.FilterByEnv(env)
+	templateAllFile, err := loadDataFromFile(tormFileDir, "**/*.xml")
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -157,12 +162,14 @@ func LoadXmlDB(apiFileDir string, sourceFileDir string, tormFileDir string) (dbA
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		dbTemplateRecords = append(dbTemplateRecords, table.Records...)
+		templateRecords = append(templateRecords, table.Records...)
 	}
-	return dbApiRecords, dbSourceRecords, dbTemplateRecords, nil
+
+	apiModels, sourceModels, tormModels = convertToModel(apiRecords, sourceRecords, templateRecords)
+	return apiModels, sourceModels, tormModels, nil
 }
 
-func ConvertType(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTemplateRecords TemplateRecords) (apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels) {
+func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTemplateRecords TemplateRecords) (apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels) {
 
 	apiModels, sourceModels, tormModels = make(apifunc.ApiModels, 0), make(apifunc.SourceModels, 0), make(apifunc.TormModels, 0)
 	for _, apiRecord := range dbApiRecords {
@@ -186,21 +193,22 @@ func ConvertType(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTempl
 			ENV:        sourceRecord.ENV,
 			SourceType: sourceRecord.SourceType,
 			Config:     sourceRecord.Config,
+			SSHConfig:  sourceRecord.SSHConfig,
 			DDL:        sourceRecord.DDL,
 		}
 		sourceModels = append(sourceModels, sourceModel)
 	}
-	for _, sourceRecord := range dbTemplateRecords {
-		sourceModel := apifunc.TormModel{
-			TemplateID:       sourceRecord.TemplateID,
-			Title:            sourceRecord.Title,
-			SourceID:         sourceRecord.SourceID,
-			Tpl:              sourceRecord.Tpl,
-			Type:             sourceRecord.Type,
-			PathTransferLine: pathtransfer.TransferLine(sourceRecord.PathTransferLine),
-			Flows:            sourceRecord.Flows,
+	for _, templateRecord := range dbTemplateRecords {
+		tormModel := apifunc.TormModel{
+			TemplateID:       templateRecord.TemplateID,
+			Title:            templateRecord.Title,
+			SourceID:         templateRecord.SourceID,
+			Tpl:              templateRecord.Tpl,
+			Type:             templateRecord.Type,
+			PathTransferLine: pathtransfer.TransferLine(templateRecord.PathTransferLine),
+			Flows:            templateRecord.Flows,
 		}
-		tormModels = append(tormModels, sourceModel)
+		tormModels = append(tormModels, tormModel)
 	}
 	return apiModels, sourceModels, tormModels
 
