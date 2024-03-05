@@ -4,20 +4,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
-	"github.com/suifengpiao14/apifunc/provider"
+	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/pathtransfer"
 	"github.com/suifengpiao14/sqlexec"
 	"github.com/suifengpiao14/stream"
 	"github.com/suifengpiao14/stream/packet"
 	"github.com/suifengpiao14/stream/packet/lineschemapacket"
 	"github.com/suifengpiao14/torm"
+	"github.com/suifengpiao14/torm/sourceprovider"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 )
+
+var DefaultAPIFlows = packethandler.Flows{
+	lineschemapacket.PACKETHANDLER_NAME_ValidatePacket,
+	lineschemapacket.PACKETHANDLER_NAME_MergeDefaultPacketHandler,
+	lineschemapacket.PACKETHANDLER_NAME_TransferTypeFormatPacket,
+	packet.PACKETHANDLER_NAME_JsonAddTrimNamespacePacket,
+	packet.PACKETHANDLER_NAME_TransferPacketHandler,
+	PACKETHANDLER_NAME_API_LOGIC,
+}
+
+var DefaultTormFlows = packethandler.Flows{
+	packet.PACKETHANDLER_NAME_CUDEvent,
+	packet.PACKETHANDLER_NAME_MysqlPacketHandler,
+}
 
 const (
 	VARIABLE_STORAGE = "storage"
@@ -52,23 +65,23 @@ type DynamicLogicFn func(ctx context.Context, injectObject InjectObject, input [
 
 // Setting 配置
 type Setting struct {
-	Api             Api   `json:"api"`
-	Torms           Torms `json:"torms"` // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
+	Api             Api        `json:"api"`
+	Torms           torm.Torms `json:"torms"` // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
 	BusinessLogicFn DynamicLogicFn
-	errorHandler    stream.ErrorHandler
 }
 
 type Api struct {
 	ApiName             string                 `json:"apiName"`
 	Route               string                 `json:"route"`
 	Method              string                 `json:"method"`
-	Flow                []string               `json:"flow"` // 按顺序组装执行流程
+	Flows               packethandler.Flows    `json:"flow"` // 按顺序组装执行流程
 	BusinessLogicFn     DynamicLogicFn         // 业务处理函数
 	RequestLineschema   string                 `json:"requestLineschema"`
 	ResponseLineschema  string                 `json:"responseLineschema"`
 	InputPathTransfers  pathtransfer.Transfers `json:"inputPathTransfers"`
 	OutputPathTransfers pathtransfer.Transfers `json:"outPathTransfers"`
-	_packetHandlers     stream.PacketHandlers
+	ErrorHandler        stream.ErrorHandler
+	_apiStream          *stream.Stream
 }
 
 // api默认流程
@@ -82,86 +95,6 @@ func (s Api) UnpackSchema() (lineschema string) {
 }
 func (s Api) PackSchema() (lineschema string) {
 	return s.ResponseLineschema
-}
-
-// Torm 模板和执行器之间存在确定关系，在配置中体现, 同一个Torm 下template 内的define 共用相同资源
-type Torm struct {
-	Name                string                 `json:"name"`
-	Source              Source                 `json:"source"`
-	Tpl                 string                 `json:"tpl"`
-	InputPathTransfers  pathtransfer.Transfers `json:"inputPathTransfers"`
-	OutputPathTransfers pathtransfer.Transfers `json:"outPathTransfers"`
-	Flow                []string               `json:"flow"` // 按顺序组装执行流程
-	_packetHandlers     stream.PacketHandlers  // 流程执行器组件集合
-}
-
-// torm默认流程
-var Torm_Flow_Default = []string{}
-
-type Torms []Torm
-
-func (ts *Torms) Add(subTorms ...Torm) {
-	if *ts == nil {
-		*ts = make(Torms, 0)
-	}
-	*ts = append(*ts, subTorms...)
-}
-func (ts Torms) GetByName(name string) (t *Torm, err error) {
-	for _, t := range ts {
-		if strings.EqualFold(name, t.Name) {
-			return &t, nil
-		}
-	}
-	err = errors.Errorf("not found torm named:%s", name)
-	return nil, err
-}
-func (ts *Torms) PathTransfers() (pathTransfers pathtransfer.Transfers) {
-	pathTransfers = make(pathtransfer.Transfers, 0)
-	for _, t := range *ts {
-		pathTransfers.AddReplace(t.InputPathTransfers...)
-		pathTransfers.AddReplace(t.OutputPathTransfers...)
-	}
-
-	return pathTransfers
-}
-
-// NamespaceInput 从标准库转换过来的命名空间
-func (t Torm) NamespaceInput() (namespaceInput string) {
-	return fmt.Sprintf("%s.input", t.Name)
-}
-
-// NamespaceInput 返回到标准库时，增加的命名空间
-func (t Torm) NamespaceOutput() (namespaceOutput string) {
-	return fmt.Sprintf("%s.output", t.Name)
-}
-
-// FormatInput 从标准输入中获取数据
-func (t Torm) FormatInput(data []byte) (input string) {
-	gjsonPath := t.InputPathTransfers.Reverse().String()
-	input = gjson.GetBytes(data, gjsonPath).String()
-	input = gjson.Get(input, t.NamespaceInput()).String()
-	return input
-}
-
-// FormatOutput 格式化输出标准数据
-func (t Torm) FormatOutput(data []byte) (output []byte) {
-	gjsonPath := t.OutputPathTransfers.String()
-	output = []byte(gjson.GetBytes(data, gjsonPath).String())
-	output, err := sjson.SetRawBytes(output, t.NamespaceOutput(), output)
-	if err != nil {
-		panic(err)
-	}
-	return output
-}
-
-// GetTemplateNames 获取模板的define名称
-func GetTemplateNames(t *template.Template) (tplNames []string) {
-	tplNames = make([]string, 0)
-	for _, tmp := range t.Templates() {
-		tplNames = append(tplNames, tmp.Name())
-	}
-
-	return tplNames
 }
 
 // 对提取变量有意义，注释暂时保留，另外可以通过注释关联资源，避免关联信息分散，增强关联性，方便维护
@@ -188,12 +121,10 @@ func GetTemplateNames(t *template.Template) (tplNames []string) {
 
 type apiCompiled struct {
 	context       context.Context
-	sourcePool    *SourcePool
 	template      *template.Template
 	_api          Api
 	_container    *Container
-	_Torms        Torms
-	_tormStream   *stream.Stream // sql stream
+	_Torms        torm.Torms
 	_errorHandler stream.ErrorHandler
 }
 
@@ -209,59 +140,13 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 			err = errors.WithMessage(err, ERROR_COMPILED_API.Error())
 		}
 	}()
-	apiName := fmt.Sprintf("%s_%s", setting.Api.Method, setting.Api.Route)
-	if len(setting.Api.Flow) == 0 {
-		setting.Api.Flow = DefaultAPIFlows()
-	}
-	for i := range setting.Torms {
-		if len(setting.Torms[i].Flow) == 0 {
-			setting.Torms[i].Flow = DefaultTormFlows()
-		}
-	}
 	capi = &apiCompiled{
-		_api:          setting.Api,
-		_Torms:        setting.Torms,
-		sourcePool:    NewSourcePool(),
-		template:      torm.NewTemplate(),
-		_errorHandler: setting.errorHandler,
-		_tormStream:   stream.NewStream(fmt.Sprintf("torm_%s", apiName), nil),
-	}
-
-	allTplArr := make([]string, 0)
-
-	// 收集模板，注册资源，模板名称关联关系
-	for _, orm := range setting.Torms {
-		//注册模板
-		t := torm.NewTemplate()
-		t, err := t.Parse(orm.Tpl)
-		if err != nil {
-			return nil, err
-		}
-		allTplArr = append(allTplArr, orm.Tpl)
-
-		// 注册资源
-		source := orm.Source
-		if source.Provider == nil {
-			source, err = MakeSource(source.Identifer, source.Type, source.Config, source.DDL)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		err = capi.sourcePool.RegisterSource(source)
-		if err != nil {
-			return nil, err
-		}
-		definedNames := GetTemplateNames(t)
-		//注册模板资源关联关系
-		err = capi.setTemplateDependSource(source.Identifer, definedNames...)
-		if err != nil {
-			return nil, err
-		}
+		_api:     setting.Api,
+		_Torms:   setting.Torms,
+		template: torm.NewTemplate(),
 	}
 	//注册模板
-	allTplArs := strings.Join(allTplArr, "\n")
-	capi.template, err = capi.template.Parse(allTplArs)
+	capi.template, err = setting.Torms.Template()
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +156,7 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 		return nil, err
 	}
 
-	packetHandler := stream.NewPacketHandlers()
+	packetHandler := packethandler.NewPacketHandlers()
 	//验证、格式化 入参
 	lineschemaPacketHandlers, err := lineschemapacket.ServerpacketHandlers(setting.Api)
 	if err != nil {
@@ -300,39 +185,18 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 			return ctx, out, err
 		}, nil))
 	}
-	capi._api._packetHandlers = packetHandler
-
-	return capi, nil
-}
-
-// RelationTemplateAndSource 设置模版依赖的资源
-func (capi *apiCompiled) setTemplateDependSource(sourceIdentifer string, templateIdentifers ...string) (err error) {
-	for _, tplName := range templateIdentifers {
-		tplName = strings.TrimSpace(tplName)
-		err = capi.sourcePool.AddTemplateIdentiferRelation(tplName, sourceIdentifer)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (capi *apiCompiled) Stream() (s *stream.Stream, err error) {
-	packetHandlers, err := capi._api._packetHandlers.GetByName(capi._api.Flow...)
+	packetHandlers, err := packetHandler.GetByName(capi._api.Flows.Strings()...)
 	if err != nil {
 		return nil, err
 	}
-	s = stream.NewStream(fmt.Sprintf("%s_stream", capi._api.ApiName), capi._errorHandler, packetHandlers...)
-	return s, nil
+	capi._api._apiStream = stream.NewStream(capi._api.ApiName, nil, packetHandlers...)
+	return capi, nil
 }
 
 // Run 执行API
 func (capi *apiCompiled) Run(ctx context.Context, inputJson string) (out string, err error) {
-	streamImp, err := capi.Stream()
-	if err != nil {
-		return "", err
-	}
-	outB, err := streamImp.Run(ctx, []byte(inputJson))
+
+	outB, err := capi._api._apiStream.Run(ctx, []byte(inputJson))
 	if err != nil {
 		return "", err
 	}
@@ -356,27 +220,23 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 	if err != nil {
 		return nil, err
 	}
-
-	prov, err := capi.sourcePool.GetProviderByTemplateIdentifer(tplName)
-	if err != nil {
-		return nil, err
-	}
-	dbProvider, ok := prov.(*provider.DBProvider)
-	if !ok {
-		err = errors.Errorf("ExecSQLTPL required provider.DBProvider source,got:%s", prov.TypeName())
-		return nil, err
-	}
-	db := dbProvider.GetDB()
-	if db == nil {
-		err = errors.Errorf("ExecSQLTPL provider.DBProvider.GetDB required,got nil (%s)", prov.TypeName())
-		return nil, err
-	}
 	tormIm, err := capi._Torms.GetByName(tplName)
 	if err != nil {
 		return nil, err
 	}
+	prov := tormIm.Source.Provider
+	dbProvider, ok := prov.(*sourceprovider.DBProvider)
+	if !ok {
+		err = errors.Errorf("ExecSQLTPL required sourceprovider.DBProvider source,got:%s", prov.TypeName())
+		return nil, err
+	}
+	db := dbProvider.GetDB()
+	if db == nil {
+		err = errors.Errorf("ExecSQLTPL sourceprovider.DBProvider.GetDB required,got nil (%s)", prov.TypeName())
+		return nil, err
+	}
 
-	allPacketHandlers := make(stream.PacketHandlers, 0)
+	allPacketHandlers := make(packethandler.PacketHandlers, 0)
 	databaseName, err := sqlexec.GetDatabaseName(db)
 	if err != nil {
 		return nil, err
@@ -385,7 +245,7 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 	allPacketHandlers.Append(cudeventPack)
 	mysqlPack := packet.NewMysqlPacketHandler(db)
 	allPacketHandlers.Append(mysqlPack)
-	packetHandlers, err := allPacketHandlers.GetByName(tormIm.Flow...)
+	packetHandlers, err := allPacketHandlers.GetByName(tormIm.Flows.Strings()...)
 	if err != nil {
 		return nil, err
 	}
