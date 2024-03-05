@@ -12,6 +12,8 @@ import (
 	"github.com/suifengpiao14/torm/sourceprovider"
 )
 
+type ContextKey string
+
 func TestAPIMemory(t *testing.T) {
 	route := "/api/1/hello"
 	method := "POST"
@@ -81,7 +83,7 @@ func TestAPIMemory(t *testing.T) {
 	}
 
 	inputJson := `{"pageIndex":"0","pageSize":"20"}`
-	ctx = context.WithValue(ctx, "traceID", "12345")
+	ctx = context.WithValue(ctx, ContextKey("traceID"), "12345")
 	out, err := routeCapi.Run(ctx, inputJson)
 	if err != nil {
 		panic(err)

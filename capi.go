@@ -120,12 +120,10 @@ func (s Api) PackSchema() (lineschema string) {
 // }
 
 type apiCompiled struct {
-	context       context.Context
-	template      *template.Template
-	_api          Api
-	_container    *Container
-	_Torms        torm.Torms
-	_errorHandler stream.ErrorHandler
+	template   *template.Template
+	_api       Api
+	_container *Container
+	_Torms     torm.Torms
 }
 
 var ERROR_COMPILED_API = errors.New("compiled api error")
@@ -198,7 +196,11 @@ func (capi *apiCompiled) Run(ctx context.Context, inputJson string) (out string,
 
 	outB, err := capi._api._apiStream.Run(ctx, []byte(inputJson))
 	if err != nil {
-		return "", err
+		if capi._api.ErrorHandler == nil {
+			return "", err
+		}
+		outB = capi._api.ErrorHandler(ctx, err) // error 处理
+		err = nil
 	}
 	out = string(outB)
 	return out, nil

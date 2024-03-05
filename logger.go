@@ -46,13 +46,12 @@ func (l RunLogInfo) Error() error {
 }
 
 func (l RunLogInfo) BeforeSend() {
-	return
 }
 
 func (l RunLogInfo) GetContext() (ctx context.Context) {
 	return l.Context
 }
 
-func (l RunLogInfo) SetContext(ctx context.Context) {
+func (l *RunLogInfo) SetContext(ctx context.Context) {
 	l.Context = ctx
 }
