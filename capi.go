@@ -52,7 +52,7 @@ type InjectObject struct {
 
 func (injectObject InjectObject) ConvertInput(namespace string, input []byte) (out []byte) {
 	pathTransfers := injectObject.PathTransfers.GetByNamespace(namespace)
-	gjsonpath := pathTransfers.Reverse().String()
+	gjsonpath := pathTransfers.Reverse().GjsonPath()
 	outStr := gjson.GetBytes(input, gjsonpath).String()
 	if outStr != "" {
 		outStr = gjson.Get(outStr, namespace).String()
@@ -170,7 +170,7 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 	packetHandler.Append(packet.NewJsonAddTrimNamespacePacket(namespaceAdd, namespaceTrim))
 
 	//转换为代码中期望的数据格式
-	transferHandler := packet.NewTransferPacketHandler(setting.Api.InputPathTransfers.String(), setting.Api.OutputPathTransfers.Reverse().String())
+	transferHandler := packet.NewTransferPacketHandler(setting.Api.InputPathTransfers.GjsonPath(), setting.Api.OutputPathTransfers.Reverse().GjsonPath())
 	packetHandler.Append(transferHandler)
 	//生成注入函数
 	injectObject := InjectObject{}

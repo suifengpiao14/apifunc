@@ -7,9 +7,9 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/suifengpiao14/logchan/v2 v2.0.22
 	github.com/suifengpiao14/packethandler v0.0.2
-	github.com/suifengpiao14/pathtransfer v0.0.3
-	github.com/suifengpiao14/sqlexec v0.0.23
-	github.com/suifengpiao14/stream v0.0.56
+	github.com/suifengpiao14/pathtransfer v0.0.4
+	github.com/suifengpiao14/sqlexec v0.0.24
+	github.com/suifengpiao14/stream v0.0.58
 	github.com/suifengpiao14/tengolib v0.0.10
 	github.com/suifengpiao14/torm v0.0.26
 	github.com/tidwall/gjson v1.17.1
@@ -47,11 +47,10 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pingcap/errors v0.11.4 // indirect
 	github.com/pingcap/log v0.0.0-20190715063458-479153f07ebd // indirect
 	github.com/pingcap/parser v3.1.2+incompatible // indirect
-	github.com/pingcap/tidb v0.0.0-20190912055946-5c48d93368d4 // indirect
+	github.com/pingcap/tidb v0.0.0-20190929123532-694e086e7914 // indirect
 	github.com/pingcap/tipb v0.0.0-20240227061755-3670eddec8d6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -62,14 +61,14 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/suifengpiao14/apihandler v0.0.71 // indirect
 	github.com/suifengpiao14/cudevent v0.0.16 // indirect
-	github.com/suifengpiao14/ddl-executor v0.0.2 // indirect
+	github.com/suifengpiao14/ddl-executor v0.0.3 // indirect
 	github.com/suifengpiao14/funcs v0.0.18 // indirect
 	github.com/suifengpiao14/gjsonmodifier v0.2.2 // indirect
 	github.com/suifengpiao14/httpraw v0.0.6 // indirect
 	github.com/suifengpiao14/kvstruct v0.0.14 // indirect
 	github.com/suifengpiao14/lineschema v0.0.35 // indirect
 	github.com/suifengpiao14/sdkgolib v0.0.22 // indirect
-	github.com/suifengpiao14/sqlplus v0.0.15 // indirect
+	github.com/suifengpiao14/sqlplus v0.0.16 // indirect
 	github.com/suifengpiao14/sshmysql v0.0.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
