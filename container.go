@@ -7,6 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/logchan/v2"
+	"github.com/suifengpiao14/packethandler"
+	"github.com/suifengpiao14/torm"
 )
 
 // 容器，包含所有预备的资源、脚本等
@@ -83,4 +85,84 @@ func (c *Container) GetCApi(route string, method string) (capi *apiCompiled, err
 // SsetLogger 封装相关性——全局设置 功能
 func (c *Container) setLogger(fn func(logInfo logchan.LogInforInterface, typeName logchan.LogName, err error)) {
 	logchan.SetLoggerWriter(fn)
+}
+
+//RegisterAPIByModel 通过模型注册路由
+func (c *Container) RegisterAPIByModel(apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
+
+	sources := make(torm.Sources, 0)
+	for _, sourceModel := range sourceModels {
+		source, err := torm.MakeSource(sourceModel.SourceID, sourceModel.SourceType, sourceModel.Config, sourceModel.DDL)
+		if err != nil {
+			return err
+		}
+		sources = append(sources, source)
+	}
+
+	for _, apiModel := range apiModels {
+		logicFn, err := c.GetDynamicLogicFn(apiModel.Route, apiModel.Method)
+		if err != nil {
+			return err
+		}
+		setting, err := makeSetting(apiModel, sources, tormModels, logicFn)
+		if err != nil {
+			return err
+		}
+		capi, err := NewApiCompiled(setting)
+		if err != nil {
+			return err
+		}
+		c.RegisterAPI(capi)
+	}
+	return nil
+}
+
+func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels, logicFn DynamicLogicFn) (setting *Setting, err error) {
+	flows := packethandler.ToFlows(strings.Split(strings.TrimSpace(apiModel.Flows), ",")...)
+	if len(flows) == 0 {
+		flows = DefaultAPIFlows
+	}
+	transfers := apiModel.PathTransferLine.Transfer()
+	inTransfers, outTransfers := transfers.SplitInOut(apiModel.ApiId)
+	setting = &Setting{
+		Api: Api{
+			ApiName:             apiModel.ApiId,
+			Method:              strings.TrimSpace(apiModel.Method),
+			Route:               strings.TrimSpace(apiModel.Route),
+			RequestLineschema:   strings.TrimSpace(apiModel.InputSchema),
+			ResponseLineschema:  strings.TrimSpace(apiModel.OutputSchema),
+			InputPathTransfers:  inTransfers,
+			OutputPathTransfers: outTransfers,
+			Flows:               flows,
+		},
+
+		Torms:           make(torm.Torms, 0),
+		BusinessLogicFn: logicFn,
+	}
+
+	dependents, err := apiModel.Dependents.Dependents()
+	if err != nil {
+		return nil, err
+	}
+	tormNames := dependents.FilterByType("torm").Fullnames()
+	subTormModel := tormModels.GetByName(tormNames...)
+	groupdTormModels := subTormModel.GroupBySourceId()
+	for sourceId, tormModels := range groupdTormModels {
+		source, err := sources.GetByIdentifer(sourceId)
+		if err != nil {
+			return nil, err
+		}
+		for _, tormModel := range tormModels {
+			flows := packethandler.ToFlows(strings.Split(strings.TrimSpace(tormModel.Flows), ",")...)
+			if len(flows) == 0 {
+				flows = DefaultTormFlows
+			}
+			torms, err := torm.ParserTpl(source, tormModel.Tpl, tormModel.PathTransferLine, flows, nil)
+			if err != nil {
+				return nil, err
+			}
+			setting.Torms.Add(torms...)
+		}
+	}
+	return setting, nil
 }
