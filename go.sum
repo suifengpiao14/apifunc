@@ -444,12 +444,12 @@ github.com/suifengpiao14/sqlplus v0.0.16 h1:jSp4lF1kTnRU7N+1+3PfmlbVj9hdlRcpqNAZ
 github.com/suifengpiao14/sqlplus v0.0.16/go.mod h1:DT+wzvWYKJDSgFx87Um4Fq59MzJvUf+o2Nd1Lu2NYAU=
 github.com/suifengpiao14/sshmysql v0.0.1 h1:A6bj4TLpTBpcTkPOuSZDrmhNeeiKELL1S1vcFAMvmZ4=
 github.com/suifengpiao14/sshmysql v0.0.1/go.mod h1:XqRYddwQ7Ek4anaf6/YwZYZt8owXxFk9w/Potae/fC8=
-github.com/suifengpiao14/stream v0.0.58 h1:n6DhBZIKUNBMrikg6IQegRJUTSdiwNYhOEYEBARNyuY=
-github.com/suifengpiao14/stream v0.0.58/go.mod h1:UZTSwSBCNnttwaF46aHKGgDwrd63TzZLrld73kOhdek=
+github.com/suifengpiao14/stream v0.0.59 h1:V5IUoimamqSODTbYm5/+sNhK4e/+LwT9K4cOAN5gr9s=
+github.com/suifengpiao14/stream v0.0.59/go.mod h1:kRUF7sx4bWNOdkw/xUyMoTD+cicCjFmKz+VuHSCt8jY=
 github.com/suifengpiao14/tengolib v0.0.10 h1:poaTeDUbMAbxEDfMmovYbau0YR82AL3ZC6MeLjvknUY=
 github.com/suifengpiao14/tengolib v0.0.10/go.mod h1:luDCEAEdBW18ZMb0Yp/8c0j/K0L8V6zNibRTrORVG/g=
-github.com/suifengpiao14/torm v0.0.26 h1:uaNXgVfHz9lS+gN0BTm4+XH11sbZ2VreBJSXwh//aZ4=
-github.com/suifengpiao14/torm v0.0.26/go.mod h1:RLONBoHOJWoCTLRnjyp9M9NTIBqq1TbtnjetHLkvejI=
+github.com/suifengpiao14/torm v0.0.27 h1:t5Y512mfvAgN0JrACS1hu33sAaWrkmu/yQHXJa2shcE=
+github.com/suifengpiao14/torm v0.0.27/go.mod h1:RLONBoHOJWoCTLRnjyp9M9NTIBqq1TbtnjetHLkvejI=
 github.com/syndtr/goleveldb v0.0.0-20180815032940-ae2bd5eed72d/go.mod h1:Z4AUp2Km+PwemOoO/VB5AOx9XSsIItzFjoJlOSiYmn0=
 github.com/tiancaiamao/appdash v0.0.0-20181126055449-889f96f722a2/go.mod h1:2PfKggNGDuadAa0LElHrByyrz4JPZ9fFx6Gs7nx7ZZU=
 github.com/tidwall/gjson v1.14.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=

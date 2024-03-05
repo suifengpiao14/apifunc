@@ -9,9 +9,9 @@ require (
 	github.com/suifengpiao14/packethandler v0.0.2
 	github.com/suifengpiao14/pathtransfer v0.0.4
 	github.com/suifengpiao14/sqlexec v0.0.24
-	github.com/suifengpiao14/stream v0.0.58
+	github.com/suifengpiao14/stream v0.0.59
 	github.com/suifengpiao14/tengolib v0.0.10
-	github.com/suifengpiao14/torm v0.0.26
+	github.com/suifengpiao14/torm v0.0.27
 	github.com/tidwall/gjson v1.17.1
 )
 
