@@ -36,7 +36,7 @@ type ApiRecord struct {
 	InputSchema  string `xml:"input_schema"`
 	OutputSchema string `xml:"output_schema"`
 	TransferLine string `xml:"transfer_line"`
-	Flows        string `xml:"flows"`
+	Flow         string `xml:"flow"`
 }
 type ApiRecords []ApiRecord
 
@@ -77,7 +77,7 @@ type TemplateRecord struct {
 	Tpl          string `xml:"tpl"`
 	Type         string `xml:"type"`
 	TransferLine string `xml:"transfer_line"`
-	Flows        string `xml:"flows"`
+	Flow         string `xml:"flow"`
 }
 
 type TemplateRecords []TemplateRecord
@@ -183,7 +183,7 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 			InputSchema:      apiRecord.InputSchema,
 			OutputSchema:     apiRecord.OutputSchema,
 			PathTransferLine: pathtransfer.TransferLine(apiRecord.TransferLine),
-			Flows:            apiRecord.Flows,
+			Flows:            apiRecord.Flow,
 		}
 		apiModels = append(apiModels, apiModel)
 	}
@@ -206,7 +206,7 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 			Tpl:              templateRecord.Tpl,
 			Type:             templateRecord.Type,
 			PathTransferLine: pathtransfer.TransferLine(templateRecord.TransferLine),
-			Flows:            templateRecord.Flows,
+			Flows:            templateRecord.Flow,
 		}
 		tormModels = append(tormModels, tormModel)
 	}
