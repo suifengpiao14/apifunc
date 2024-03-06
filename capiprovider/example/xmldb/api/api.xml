@@ -18,7 +18,7 @@ fullname=config.needPic,required,title=是否需要图片
 fullname=config.canRelationOldOrderId,required,title=是否关联旧订单
 </input_schema>
 <output_schema>version=http://json-schema.org/draft-07/schema#,id=out</output_schema>
-<transfers>
+<transfer_line>
 
 xyCancelRemarkInsert.input.config.hsbRemark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fhsb_remark
 xyCancelRemarkInsert.input.config.popUpWindow:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fpop_up_window
@@ -27,6 +27,6 @@ xyCancelRemarkInsert.input.config.status:dictionary.xyxz_manage_db.t_xyxz_xy_can
 xyCancelRemarkInsert.input.config.needPic:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fneed_pic
 xyCancelRemarkInsert.input.config.canRelationOldOrderId:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fcan_relation_old_order_id
 
-</transfers>
+</transfer_line>
 </RECORD>
 </RECORDS>

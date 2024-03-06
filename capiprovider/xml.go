@@ -35,7 +35,7 @@ type ApiRecord struct {
 	Dependents   string `xml:"dependents"`
 	InputSchema  string `xml:"input_schema"`
 	OutputSchema string `xml:"output_schema"`
-	TransferLine string `xml:"transfers"`
+	TransferLine string `xml:"transfer_line"`
 	Flows        string `xml:"flows"`
 }
 type ApiRecords []ApiRecord
@@ -76,7 +76,7 @@ type TemplateRecord struct {
 	SourceID     string `xml:"source_id"`
 	Tpl          string `xml:"tpl"`
 	Type         string `xml:"type"`
-	TransferLine string `xml:"transfers"`
+	TransferLine string `xml:"transfer_line"`
 	Flows        string `xml:"flows"`
 }
 
