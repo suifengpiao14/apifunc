@@ -175,7 +175,7 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 	injectObject.ExecSQLTPL = func(ctx context.Context, tplName string, input []byte) (out []byte, err error) {
 		return capi.ExecSQLTPL(ctx, tplName, input)
 	}
-	injectObject.PathTransfers = setting.Torms.PathTransfers()
+	injectObject.PathTransfers = setting.Torms.Transfers()
 	//注入逻辑处理函数
 	if setting.BusinessLogicFn != nil {
 		packetHandler.Append(packet.NewFuncPacketHandler(PACKETHANDLER_NAME_API_LOGIC, func(ctx context.Context, input []byte) (newCtx context.Context, out []byte, err error) {
