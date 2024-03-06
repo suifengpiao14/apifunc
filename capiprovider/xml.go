@@ -27,16 +27,16 @@ type xmlTemplateTable struct {
 }
 
 type ApiRecord struct {
-	ApiID            string `xml:"api_id"`
-	Title            string `xml:"title"`
-	Method           string `xml:"method"`
-	Route            string `xml:"route"`
-	Script           string `xml:"script"`
-	Dependents       string `xml:"dependents"`
-	InputSchema      string `xml:"input_schema"`
-	OutputSchema     string `xml:"output_schema"`
-	PathTransferLine string `xml:"pathTransfers"`
-	Flows            string `xml:"flows"`
+	ApiID        string `xml:"api_id"`
+	Title        string `xml:"title"`
+	Method       string `xml:"method"`
+	Route        string `xml:"route"`
+	Script       string `xml:"script"`
+	Dependents   string `xml:"dependents"`
+	InputSchema  string `xml:"input_schema"`
+	OutputSchema string `xml:"output_schema"`
+	TransferLine string `xml:"transfers"`
+	Flows        string `xml:"flows"`
 }
 type ApiRecords []ApiRecord
 
@@ -71,13 +71,13 @@ func (ss SourceRecords) FilterByEnv(env string) (out SourceRecords) {
 }
 
 type TemplateRecord struct {
-	TemplateID       string `xml:"template_id"`
-	Title            string `xml:"title"`
-	SourceID         string `xml:"source_id"`
-	Tpl              string `xml:"tpl"`
-	Type             string `xml:"type"`
-	PathTransferLine string `xml:"pathTransfers"`
-	Flows            string `xml:"flows"`
+	TemplateID   string `xml:"template_id"`
+	Title        string `xml:"title"`
+	SourceID     string `xml:"source_id"`
+	Tpl          string `xml:"tpl"`
+	Type         string `xml:"type"`
+	TransferLine string `xml:"transfers"`
+	Flows        string `xml:"flows"`
 }
 
 type TemplateRecords []TemplateRecord
@@ -182,7 +182,7 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 			Dependents:       apifunc.DependentJson(apiRecord.Dependents),
 			InputSchema:      apiRecord.InputSchema,
 			OutputSchema:     apiRecord.OutputSchema,
-			PathTransferLine: pathtransfer.TransferLine(apiRecord.PathTransferLine),
+			PathTransferLine: pathtransfer.TransferLine(apiRecord.TransferLine),
 			Flows:            apiRecord.Flows,
 		}
 		apiModels = append(apiModels, apiModel)
@@ -205,7 +205,7 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 			SourceID:         templateRecord.SourceID,
 			Tpl:              templateRecord.Tpl,
 			Type:             templateRecord.Type,
-			PathTransferLine: pathtransfer.TransferLine(templateRecord.PathTransferLine),
+			PathTransferLine: pathtransfer.TransferLine(templateRecord.TransferLine),
 			Flows:            templateRecord.Flows,
 		}
 		tormModels = append(tormModels, tormModel)

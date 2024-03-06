@@ -17,7 +17,7 @@ select * from `t_xyxz_xy_cancel_remark_map` where  `Fhsb_remark`=:HsbRemark
 
  limit 0,1; {{end}}
  </tpl>
-<pathTransfers>
+<transfers>
 GetByHsbRemark.input.HsbRemark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fhsb_remark
 GetByHsbRemark.input.Status@int:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fstatus@int
 GetByHsbRemark.input.ExcludeId:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fid
@@ -30,7 +30,7 @@ GetByHsbRemark.output.Fneed_pic:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remar
 GetByHsbRemark.output.Fcan_relation_old_order_id:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fcan_relation_old_order_id
 GetByHsbRemark.output.Fauto_create_time:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fauto_create_time
 GetByHsbRemark.output.Fauto_update_time:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fauto_update_time
-</pathTransfers>
+</transfers>
 <flows>
 </flows>
 </RECORD>
@@ -44,14 +44,14 @@ insert into `t_xyxz_xy_cancel_remark_map` (`Fhsb_remark`,`Fxy_remark`,`Fpop_up_w
 (:FhsbRemark,:FxyRemark,:FpopUpWindow,:Fstatus,:Fneed_pic,:Fcan_relation_old_order_id); 
 {{end}}
  </tpl>
-<pathTransfers>
+<transfers>
 InsertHsbRemark.input.FhsbRemark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fhsb_remark
 InsertHsbRemark.input.FxyRemark:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fxy_remark
 InsertHsbRemark.input.FpopUpWindow:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fpop_up_window
 InsertHsbRemark.input.Fstatus:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fstatus
 InsertHsbRemark.input.Fneed_pic:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fneed_pic
 InsertHsbRemark.input.Fcan_relation_old_order_id:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fcan_relation_old_order_id
-</pathTransfers>
+</transfers>
 <flows>
 </flows>
 </RECORD>
