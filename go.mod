@@ -7,7 +7,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/suifengpiao14/glob v0.0.4
 	github.com/suifengpiao14/logchan/v2 v2.0.22
-	github.com/suifengpiao14/packethandler v0.0.2
+	github.com/suifengpiao14/packethandler v0.0.3
 	github.com/suifengpiao14/pathtransfer v0.0.4
 	github.com/suifengpiao14/sqlexec v0.0.28
 	github.com/suifengpiao14/sshmysql v0.0.3

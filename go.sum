@@ -426,8 +426,8 @@ github.com/suifengpiao14/lineschema v0.0.35 h1:4UkDkI/4Y1C/p2b9J2PLnb1VSsSahjtLF
 github.com/suifengpiao14/lineschema v0.0.35/go.mod h1:ITtxFGRZ5c/M+WWGi+qXMr89SIokKlaXS7Q2mCcnH3E=
 github.com/suifengpiao14/logchan/v2 v2.0.22 h1:LhpV9E0ofNRQFEvR9MOF4hSHJes8s/aXn9Z4qdLVPck=
 github.com/suifengpiao14/logchan/v2 v2.0.22/go.mod h1:6o0naTqWDkgYMR4vQetJn1zVGMLD9YZ8TrNzQ9OjAFY=
-github.com/suifengpiao14/packethandler v0.0.2 h1:s+7rwFSFjLQHcPZ0vvPG7yatsOnK1X4ExrixsZT7b1Y=
-github.com/suifengpiao14/packethandler v0.0.2/go.mod h1:rP7dFAg45LaYba/CfXHar/4eI+odGaaYATA5dtraDTw=
+github.com/suifengpiao14/packethandler v0.0.3 h1:YfP3CS1qVbwnl3XOUboElMNzb7b28fUxihxd/nh6Mhs=
+github.com/suifengpiao14/packethandler v0.0.3/go.mod h1:rP7dFAg45LaYba/CfXHar/4eI+odGaaYATA5dtraDTw=
 github.com/suifengpiao14/pathtransfer v0.0.4 h1:jRuLDE3i5GflT2aDAZwKQe3Qdn+YF1zquee3CbSA1Rs=
 github.com/suifengpiao14/pathtransfer v0.0.4/go.mod h1:rCR9rnaIKX8BWDxyA7V6MBs5sGAYVaLfzZCDjVstgpw=
 github.com/suifengpiao14/sdkgolib v0.0.22 h1:cEqk9u7oB95EnVwsW4RncSQHHC0MOLWnoaTXW2XwB+U=

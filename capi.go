@@ -18,7 +18,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-var DefaultAPIFlows = packethandler.Flows{
+var DefaultAPIFlows = packethandler.Flow{
 	lineschemapacket.PACKETHANDLER_NAME_ValidatePacket,
 	lineschemapacket.PACKETHANDLER_NAME_MergeDefaultPacketHandler,
 	lineschemapacket.PACKETHANDLER_NAME_TransferTypeFormatPacket,
@@ -27,7 +27,7 @@ var DefaultAPIFlows = packethandler.Flows{
 	PACKETHANDLER_NAME_API_LOGIC,
 }
 
-var DefaultTormFlows = packethandler.Flows{
+var DefaultTormFlows = packethandler.Flow{
 	packet.PACKETHANDLER_NAME_CUDEvent,
 	packet.PACKETHANDLER_NAME_MysqlPacketHandler,
 }
@@ -74,7 +74,7 @@ type Api struct {
 	ApiName             string                 `json:"apiName"`
 	Route               string                 `json:"route"`
 	Method              string                 `json:"method"`
-	Flows               packethandler.Flows    `json:"flow"` // 按顺序组装执行流程
+	Flow                packethandler.Flow     `json:"flow"` // 按顺序组装执行流程
 	BusinessLogicFn     DynamicLogicFn         // 业务处理函数
 	RequestLineschema   string                 `json:"requestLineschema"`
 	ResponseLineschema  string                 `json:"responseLineschema"`
@@ -183,7 +183,7 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 			return ctx, out, err
 		}, nil))
 	}
-	packetHandlers, err := packetHandler.GetByName(capi._api.Flows.Strings()...)
+	packetHandlers, err := packetHandler.GetByName(capi._api.Flow...)
 	if err != nil {
 		return nil, err
 	}

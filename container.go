@@ -7,7 +7,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/logchan/v2"
-	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/torm"
 )
 
@@ -118,7 +117,7 @@ func (c *Container) RegisterAPIByModel(apiModels ApiModels, sourceModels SourceM
 }
 
 func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels, logicFn DynamicLogicFn) (setting *Setting, err error) {
-	flows := packethandler.ToFlows(strings.Split(strings.TrimSpace(apiModel.Flows), ",")...)
+	flows := strings.Split(strings.TrimSpace(apiModel.Flows), ",")
 	if len(flows) == 0 {
 		flows = DefaultAPIFlows
 	}
@@ -133,7 +132,7 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels,
 			ResponseLineschema:  strings.TrimSpace(apiModel.OutputSchema),
 			InputPathTransfers:  inTransfers,
 			OutputPathTransfers: outTransfers,
-			Flows:               flows,
+			Flow:                flows,
 		},
 
 		Torms:           make(torm.Torms, 0),
@@ -153,7 +152,7 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels,
 			return nil, err
 		}
 		for _, tormModel := range tormModels {
-			flows := packethandler.ToFlows(strings.Split(strings.TrimSpace(tormModel.Flow), ",")...)
+			flows := strings.Split(strings.TrimSpace(tormModel.Flow), ",")
 			if len(flows) == 0 {
 				flows = DefaultTormFlows
 			}
@@ -171,4 +170,10 @@ func (c *Container) RegisterRouteFn(routeFn func(method string, path string)) {
 	for _, api := range c.apis {
 		routeFn(api._api.Method, api._api.Route)
 	}
+}
+
+func DefaultApiHandlerFn(api Api) (logicHandler DynamicLogicFn, err error) {
+	api.Flow.DropEmpty()
+
+	return
 }
