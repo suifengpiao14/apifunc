@@ -31,8 +31,8 @@ GetByHsbRemark.output.Fcan_relation_old_order_id:dictionary.xyxz_manage_db.t_xyx
 GetByHsbRemark.output.Fauto_create_time:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fauto_create_time
 GetByHsbRemark.output.Fauto_update_time:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fauto_update_time
 </transfer_line>
-<flows>
-</flows>
+<flow>
+</flow>
 </RECORD>
 
 <RECORD>
@@ -52,7 +52,7 @@ InsertHsbRemark.input.Fstatus:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_
 InsertHsbRemark.input.Fneed_pic:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fneed_pic
 InsertHsbRemark.input.Fcan_relation_old_order_id:dictionary.xyxz_manage_db.t_xyxz_xy_cancel_remark_map.Fcan_relation_old_order_id
 </transfer_line>
-<flows>
-</flows>
+<flow>
+</flow>
 </RECORD>
 </RECORDS>
