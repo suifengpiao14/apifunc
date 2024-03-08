@@ -14,7 +14,6 @@ import (
 	"github.com/suifengpiao14/stream/packet"
 	"github.com/suifengpiao14/stream/packet/lineschemapacket"
 	"github.com/suifengpiao14/torm"
-	"github.com/suifengpiao14/torm/sourceprovider"
 	"github.com/tidwall/gjson"
 )
 
@@ -81,6 +80,7 @@ type Api struct {
 	InputPathTransfers  pathtransfer.Transfers `json:"inputPathTransfers"`
 	OutputPathTransfers pathtransfer.Transfers `json:"outPathTransfers"`
 	ErrorHandler        stream.ErrorHandler
+	Dependents          Dependents `json:"dependents"`
 	_apiStream          *stream.Stream
 }
 
@@ -183,6 +183,7 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 			return ctx, out, err
 		}, nil))
 	}
+	capi._api.Flow.DropEmpty()
 	packetHandlers, err := packetHandler.GetByName(capi._api.Flow...)
 	if err != nil {
 		return nil, err
@@ -227,7 +228,7 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		return nil, err
 	}
 	prov := tormIm.Source.Provider
-	dbProvider, ok := prov.(*sourceprovider.DBProvider)
+	dbProvider, ok := prov.(*sqlexec.ExecutorSQL)
 	if !ok {
 		err = errors.Errorf("ExecSQLTPL required sourceprovider.DBProvider source,got:%s", prov.TypeName())
 		return nil, err
@@ -247,7 +248,7 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 	allPacketHandlers.Append(cudeventPack)
 	mysqlPack := packet.NewMysqlPacketHandler(db)
 	allPacketHandlers.Append(mysqlPack)
-	packetHandlers, err := allPacketHandlers.GetByName(tormIm.Flows.Strings()...)
+	packetHandlers, err := allPacketHandlers.GetByName(tormIm.Flow...)
 	if err != nil {
 		return nil, err
 	}

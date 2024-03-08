@@ -183,7 +183,7 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 			InputSchema:      apiRecord.InputSchema,
 			OutputSchema:     apiRecord.OutputSchema,
 			PathTransferLine: pathtransfer.TransferLine(apiRecord.TransferLine),
-			Flows:            apiRecord.Flow,
+			Flow:            apiRecord.Flow,
 		}
 		apiModels = append(apiModels, apiModel)
 	}

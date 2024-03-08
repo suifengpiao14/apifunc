@@ -14,6 +14,9 @@ type DependentJson string
 
 func (dj DependentJson) Dependents() (dependents Dependents, err error) {
 	dependents = make(Dependents, 0)
+	if dj == "" {
+		return dependents, nil
+	}
 	err = json.Unmarshal([]byte(dj), &dependents)
 	if err != nil {
 		return nil, err
@@ -26,6 +29,10 @@ type Dependent struct {
 	Fullname string `json:"fullname"`
 	Type     string `json:"type"`
 }
+
+const (
+	Dependent_Type_Torm = "torm"
+)
 
 type Dependents []Dependent
 
@@ -47,6 +54,14 @@ func (deps Dependents) Fullnames() (fullnames []string) {
 	return fullnames
 }
 
+//First 获取第一个
+func (deps Dependents) First() (fullname string) {
+	for _, d := range deps {
+		return d.Fullname
+	}
+	return fullname
+}
+
 func (deps Dependents) String() (s string) {
 	b, err := json.Marshal(deps)
 	if err != nil {
@@ -66,7 +81,7 @@ type ApiModel struct {
 	InputSchema      string                    `json:"inputSchema"`
 	OutputSchema     string                    `json:"outputSchema"`
 	PathTransferLine pathtransfer.TransferLine `json:"pathTransfers"`
-	Flows            string                    `json:"flows"`
+	Flow             string                    `json:"flow"`
 }
 
 type ApiModels []ApiModel

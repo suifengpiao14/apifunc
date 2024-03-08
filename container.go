@@ -1,12 +1,15 @@
 package apifunc
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/logchan/v2"
+	"github.com/suifengpiao14/packethandler"
+	"github.com/suifengpiao14/pathtransfer"
 	"github.com/suifengpiao14/torm"
 )
 
@@ -91,7 +94,7 @@ func (c *Container) RegisterAPIByModel(apiModels ApiModels, sourceModels SourceM
 
 	sources := make(torm.Sources, 0)
 	for _, sourceModel := range sourceModels {
-		source, err := torm.MakeSource(sourceModel.SourceID, sourceModel.SourceType, sourceModel.Config, sourceModel.DDL)
+		source, err := torm.MakeSource(sourceModel.SourceID, sourceModel.SourceType, sourceModel.Config, sourceModel.SSHConfig, sourceModel.DDL)
 		if err != nil {
 			return err
 		}
@@ -99,14 +102,28 @@ func (c *Container) RegisterAPIByModel(apiModels ApiModels, sourceModels SourceM
 	}
 
 	for _, apiModel := range apiModels {
+		setting, err := makeSetting(apiModel, sources, tormModels)
+		if err != nil {
+			return err
+		}
 		logicFn, err := c.GetDynamicLogicFn(apiModel.Route, apiModel.Method)
+		if errors.Is(err, ERROR_NOT_FOUND_DYNAMIC_LOGICFN_FUNC) {
+			err = nil
+			logicFn = ApiHandlerEmptyFn() // 所有的都以empty 做保底逻辑
+			tormName := setting.Api.Dependents.FilterByType(Dependent_Type_Torm).First()
+			if tormName != "" {
+				tor, err := setting.Torms.GetByName(tormName)
+				if err != nil {
+					return err
+				}
+				logicFn = ApiHandlerRunTormFn(*tor)
+			}
+
+		}
 		if err != nil {
 			return err
 		}
-		setting, err := makeSetting(apiModel, sources, tormModels, logicFn)
-		if err != nil {
-			return err
-		}
+		setting.BusinessLogicFn = logicFn
 		capi, err := NewApiCompiled(setting)
 		if err != nil {
 			return err
@@ -116,11 +133,13 @@ func (c *Container) RegisterAPIByModel(apiModels ApiModels, sourceModels SourceM
 	return nil
 }
 
-func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels, logicFn DynamicLogicFn) (setting *Setting, err error) {
-	flows := strings.Split(strings.TrimSpace(apiModel.Flows), ",")
+func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels) (setting *Setting, err error) {
+	flows := packethandler.Flow(strings.Split(strings.TrimSpace(apiModel.Flow), ","))
+	flows.DropEmpty()
 	if len(flows) == 0 {
 		flows = DefaultAPIFlows
 	}
+
 	transfers := apiModel.PathTransferLine.Transfer()
 	inTransfers, outTransfers := transfers.SplitInOut(apiModel.ApiId)
 	setting = &Setting{
@@ -135,14 +154,14 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels,
 			Flow:                flows,
 		},
 
-		Torms:           make(torm.Torms, 0),
-		BusinessLogicFn: logicFn,
+		Torms: make(torm.Torms, 0),
 	}
 
 	dependents, err := apiModel.Dependents.Dependents()
 	if err != nil {
 		return nil, err
 	}
+	setting.Api.Dependents = dependents
 	tormNames := dependents.FilterByType("torm").Fullnames()
 	subTormModel := tormModels.GetByName(tormNames...)
 	groupdTormModels := subTormModel.GroupBySourceId()
@@ -152,7 +171,8 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels,
 			return nil, err
 		}
 		for _, tormModel := range tormModels {
-			flows := strings.Split(strings.TrimSpace(tormModel.Flow), ",")
+			flows := packethandler.Flow(strings.Split(strings.TrimSpace(tormModel.Flow), ","))
+			flows.DropEmpty()
 			if len(flows) == 0 {
 				flows = DefaultTormFlows
 			}
@@ -166,14 +186,38 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels,
 	return setting, nil
 }
 
+//RegisterRouteFn 给router 注册路由
 func (c *Container) RegisterRouteFn(routeFn func(method string, path string)) {
 	for _, api := range c.apis {
 		routeFn(api._api.Method, api._api.Route)
 	}
 }
 
-func DefaultApiHandlerFn(api Api) (logicHandler DynamicLogicFn, err error) {
-	api.Flow.DropEmpty()
+//ApiHandlerRunTormFn 内置运行单个Torm业务逻辑函数
+func ApiHandlerRunTormFn(tor torm.Torm) (logicHandler DynamicLogicFn) {
+	tormName := tor.Name
+	logicHandler = func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error) {
+		switch strings.ToUpper(tor.Source.Type) {
+		case torm.SOURCE_TYPE_SQL:
+			inputName := strings.Trim(fmt.Sprintf("%s%s", tor.Name, pathtransfer.Transfer_Direction_input), ".")
+			data := injectObject.ConvertInput(inputName, input)
+			out, err = injectObject.ExecSQLTPL(ctx, tormName, data)
+			if err != nil {
+				return nil, err
+			}
+			return out, err
+		default:
+			err = errors.Errorf("not implement source type:%s", torm.SOURCE_TYPE_SQL)
+			return nil, err
+		}
+	}
+	return logicHandler
+}
 
-	return
+//ApiHandlerEmptyFn 内置空业务逻辑函数，使用mock数据
+func ApiHandlerEmptyFn() (logicHandler DynamicLogicFn) {
+	logicHandler = func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error) {
+		return out, nil
+	}
+	return logicHandler
 }

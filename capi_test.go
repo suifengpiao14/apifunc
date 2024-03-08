@@ -35,7 +35,7 @@ func TestAPIMemory(t *testing.T) {
 	MemoryDB.InOutMap[countSQL] = "6"
 	torms, err := torm.ParserTpl(&torm.Source{
 		Identifer: sourceIdentifer,
-		Type:      torm.PROVIDER_SQL,
+		Type:      torm.SOURCE_TYPE_SQL,
 		Config:    sourceConfig,
 		Provider:  &MemoryDB,
 	}, tplStr, "nil", nil, nil)
