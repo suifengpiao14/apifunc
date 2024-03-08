@@ -153,11 +153,11 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels,
 			return nil, err
 		}
 		for _, tormModel := range tormModels {
-			flows := packethandler.ToFlows(strings.Split(strings.TrimSpace(tormModel.Flows), ",")...)
+			flows := packethandler.ToFlows(strings.Split(strings.TrimSpace(tormModel.Flow), ",")...)
 			if len(flows) == 0 {
 				flows = DefaultTormFlows
 			}
-			torms, err := torm.ParserTpl(source, tormModel.Tpl, tormModel.PathTransferLine, flows, nil)
+			torms, err := torm.ParserTpl(source, tormModel.Tpl, tormModel.TransferLine, flows, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -165,4 +165,10 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels,
 		}
 	}
 	return setting, nil
+}
+
+func (c *Container) RegisterRouteFn(routeFn func(method string, path string)) {
+	for _, api := range c.apis {
+		routeFn(api._api.Method, api._api.Route)
+	}
 }

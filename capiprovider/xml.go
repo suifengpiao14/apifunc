@@ -200,13 +200,13 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 	}
 	for _, templateRecord := range dbTemplateRecords {
 		tormModel := apifunc.TormModel{
-			TemplateID:       templateRecord.TemplateID,
-			Title:            templateRecord.Title,
-			SourceID:         templateRecord.SourceID,
-			Tpl:              templateRecord.Tpl,
-			Type:             templateRecord.Type,
-			PathTransferLine: pathtransfer.TransferLine(templateRecord.TransferLine),
-			Flows:            templateRecord.Flow,
+			TemplateID:   templateRecord.TemplateID,
+			Title:        templateRecord.Title,
+			SourceID:     templateRecord.SourceID,
+			Tpl:          templateRecord.Tpl,
+			Type:         templateRecord.Type,
+			TransferLine: pathtransfer.TransferLine(templateRecord.TransferLine),
+			Flow:         templateRecord.Flow,
 		}
 		tormModels = append(tormModels, tormModel)
 	}

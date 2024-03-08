@@ -124,13 +124,13 @@ func (ss *SourceModels) FillDDL() (err error) {
 }
 
 type TormModel struct {
-	TemplateID       string                    `json:"templateId"`
-	Title            string                    `json:"title"`
-	SourceID         string                    `json:"sourceId"`
-	Tpl              string                    `json:"tpl"`
-	Type             string                    `json:"type"`
-	PathTransferLine pathtransfer.TransferLine `json:"pathTransfers"`
-	Flows            string                    `json:"flows"`
+	TemplateID   string                    `json:"templateId"`
+	Title        string                    `json:"title"`
+	SourceID     string                    `json:"sourceId"`
+	Tpl          string                    `json:"tpl"`
+	Type         string                    `json:"type"`
+	TransferLine pathtransfer.TransferLine `json:"transferLine"`
+	Flow         string                    `json:"flow"`
 }
 
 type TormModels []TormModel
