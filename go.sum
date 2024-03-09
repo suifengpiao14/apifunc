@@ -424,8 +424,8 @@ github.com/suifengpiao14/kvstruct v0.0.14 h1:c5Eb6AsBN0gTVGk/Vj05aEiJ79j+pNNo3aI
 github.com/suifengpiao14/kvstruct v0.0.14/go.mod h1:v3hf2KPrafdYJJ49M5RWLfpYS8Z2fsJO/rAGMnIBYn8=
 github.com/suifengpiao14/lineschema v0.0.35 h1:4UkDkI/4Y1C/p2b9J2PLnb1VSsSahjtLFNZboW9yNqE=
 github.com/suifengpiao14/lineschema v0.0.35/go.mod h1:ITtxFGRZ5c/M+WWGi+qXMr89SIokKlaXS7Q2mCcnH3E=
-github.com/suifengpiao14/logchan/v2 v2.0.22 h1:LhpV9E0ofNRQFEvR9MOF4hSHJes8s/aXn9Z4qdLVPck=
-github.com/suifengpiao14/logchan/v2 v2.0.22/go.mod h1:6o0naTqWDkgYMR4vQetJn1zVGMLD9YZ8TrNzQ9OjAFY=
+github.com/suifengpiao14/logchan/v2 v2.0.23 h1:Z+cWIZ3x4oSLAQ6HwxuurnRDPO8ra5n+GkHDA6NVLlU=
+github.com/suifengpiao14/logchan/v2 v2.0.23/go.mod h1:6o0naTqWDkgYMR4vQetJn1zVGMLD9YZ8TrNzQ9OjAFY=
 github.com/suifengpiao14/packethandler v0.0.3 h1:YfP3CS1qVbwnl3XOUboElMNzb7b28fUxihxd/nh6Mhs=
 github.com/suifengpiao14/packethandler v0.0.3/go.mod h1:rP7dFAg45LaYba/CfXHar/4eI+odGaaYATA5dtraDTw=
 github.com/suifengpiao14/pathtransfer v0.0.4 h1:jRuLDE3i5GflT2aDAZwKQe3Qdn+YF1zquee3CbSA1Rs=
