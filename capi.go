@@ -2,8 +2,8 @@ package apifunc
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -21,12 +21,13 @@ var DefaultAPIFlows = packethandler.Flow{
 	lineschemapacket.PACKETHANDLER_NAME_ValidatePacket,
 	lineschemapacket.PACKETHANDLER_NAME_MergeDefaultPacketHandler,
 	lineschemapacket.PACKETHANDLER_NAME_TransferTypeFormatPacket,
-	packet.PACKETHANDLER_NAME_JsonAddTrimNamespacePacket,
 	packet.PACKETHANDLER_NAME_TransferPacketHandler,
 	PACKETHANDLER_NAME_API_LOGIC,
 }
 
 var DefaultTormFlows = packethandler.Flow{
+	packet.PACKETHANDLER_NAME_TransferPacketHandler,
+	packet.PACKETHANDLER_NAME_TormPackHandler,
 	packet.PACKETHANDLER_NAME_CUDEvent,
 	packet.PACKETHANDLER_NAME_MysqlPacketHandler,
 }
@@ -50,12 +51,23 @@ type InjectObject struct {
 }
 
 func (injectObject InjectObject) ConvertInput(namespace string, input []byte) (out []byte) {
-	pathTransfers := injectObject.PathTransfers.GetByNamespace(namespace)
-	gjsonpath := pathTransfers.Reverse().GjsonPath()
+	pathTransfers := injectObject.PathTransfers.GetByNamespace(namespace).Reverse()
+	gjsonpath := pathTransfers.ModifyDstPath(func(path string) (newPath string) {
+		newPath = strings.TrimPrefix(strings.TrimPrefix(path, namespace), ".")
+		return newPath
+	}).GjsonPath()
 	outStr := gjson.GetBytes(input, gjsonpath).String()
-	if outStr != "" {
-		outStr = gjson.Get(outStr, namespace).String()
-	}
+	out = []byte(outStr)
+	return out
+}
+
+func (injectObject InjectObject) ConvertOutput(namespace string, data []byte) (out []byte) {
+	pathTransfers := injectObject.PathTransfers.GetByNamespace(namespace)
+	gjsonpath := pathTransfers.ModifySrcPath(func(path string) (newPath string) {
+		newPath = strings.TrimPrefix(strings.TrimPrefix(path, namespace), ".")
+		return newPath
+	}).GjsonPath()
+	outStr := gjson.GetBytes(data, gjsonpath).String()
 	out = []byte(outStr)
 	return out
 }
@@ -163,12 +175,19 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 	}
 
 	packetHandler.Append(lineschemaPacketHandlers...)
-	namespaceAdd := fmt.Sprintf("%s%s", setting.Api.ApiName, pathtransfer.Transfer_Direction_input)   // 补充命名空间
-	namespaceTrim := fmt.Sprintf("%s%s", setting.Api.ApiName, pathtransfer.Transfer_Direction_output) // 去除命名空间
-	packetHandler.Append(packet.NewJsonAddTrimNamespacePacket(namespaceAdd, namespaceTrim))
+	namespaceInput := fmt.Sprintf("%s%s", setting.Api.ApiName, pathtransfer.Transfer_Direction_input)   // 补充命名空间
+	namespaceOutput := fmt.Sprintf("%s%s", setting.Api.ApiName, pathtransfer.Transfer_Direction_output) // 去除命名空间
+	inputTransfer := setting.Api.InputPathTransfers.ModifySrcPath(func(path string) (newPath string) {
+		newPath = strings.TrimPrefix(strings.TrimPrefix(path, namespaceInput), ".")
+		return newPath
+	}).GjsonPath()
+	outputTransfer := setting.Api.OutputPathTransfers.Reverse().ModifyDstPath(func(path string) (newPath string) {
+		newPath = strings.TrimPrefix(strings.TrimPrefix(path, namespaceOutput), ".")
+		return newPath
+	}).GjsonPath()
 
 	//转换为代码中期望的数据格式
-	transferHandler := packet.NewTransferPacketHandler(setting.Api.InputPathTransfers.GjsonPath(), setting.Api.OutputPathTransfers.Reverse().GjsonPath())
+	transferHandler := packet.NewTransferPacketHandler(inputTransfer, outputTransfer)
 	packetHandler.Append(transferHandler)
 	//生成注入函数
 	injectObject := InjectObject{}
@@ -209,24 +228,29 @@ func (capi *apiCompiled) Run(ctx context.Context, inputJson string) (out string,
 
 // ExecSQLTPL 执行SQL语句
 func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input []byte) (out []byte, err error) {
-	volume := torm.VolumeMap{}
-	if len(input) > 0 {
-		m := make(map[string]any)
-		err = json.Unmarshal(input, &m)
-		if err != nil {
-			return nil, err
-		}
-		convertFloatsToInt(m) // json.Unmarshal 出来后int 转为float64了，需要尝试优先使用int
-		volume = torm.VolumeMap(m)
-	}
-	sqlStr, _, _, err := torm.GetSQLFromTemplate(capi.template, tplName, &volume)
-	if err != nil {
-		return nil, err
-	}
 	tormIm, err := capi._Torms.GetByName(tplName)
 	if err != nil {
 		return nil, err
 	}
+
+	allPacketHandlers := make(packethandler.PacketHandlers, 0)
+	inputPathTransfers, outputPathTransfers := tormIm.Transfers.SplitInOut(tormIm.Name)
+
+	namespaceInput := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_input)   //去除命名空间
+	namespaceOutput := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_output) // 补充命名空间
+	inputGopath := inputPathTransfers.Reverse().ModifyDstPath(func(path string) (newPath string) {
+		newPath = strings.TrimPrefix(path, namespaceInput)
+		return newPath
+	}).GjsonPath()
+	outputGopath := outputPathTransfers.ModifySrcPath(func(path string) (newPath string) {
+		newPath = strings.TrimPrefix(path, namespaceOutput)
+		return newPath
+	}).GjsonPath()
+	//转换为代码中期望的数据格式
+	transferHandler := packet.NewTransferPacketHandler(inputGopath, outputGopath)
+	allPacketHandlers.Append(transferHandler)
+	allPacketHandlers.Append(packet.NewTormPackHandler(*tormIm))
+
 	prov := tormIm.Source.Provider
 	dbProvider, ok := prov.(*sqlexec.ExecutorSQL)
 	if !ok {
@@ -238,18 +262,6 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		err = errors.Errorf("ExecSQLTPL sourceprovider.DBProvider.GetDB required,got nil (%s)", prov.TypeName())
 		return nil, err
 	}
-
-	allPacketHandlers := make(packethandler.PacketHandlers, 0)
-	inputPathTransfers, outputPathTransfers := tormIm.Transfers.SplitInOut(tormIm.Name)
-
-	//转换为代码中期望的数据格式
-	transferHandler := packet.NewTransferPacketHandler(inputPathTransfers.Reverse().GjsonPath(), outputPathTransfers.GjsonPath())
-	allPacketHandlers.Append(transferHandler)
-
-	namespaceTrim := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_input) //去除命名空间
-	namespaceAdd := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_output) // 补充命名空间
-	allPacketHandlers.Append(packet.NewJsonTrimAddNamespacePacket(namespaceTrim, namespaceAdd))
-
 	databaseName, err := sqlexec.GetDatabaseName(db)
 	if err != nil {
 		return nil, err
@@ -263,7 +275,7 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		return nil, err
 	}
 	s := stream.NewStream(tplName, nil, packetHandlers...)
-	out, err = s.Run(ctx, []byte(sqlStr))
+	out, err = s.Run(ctx, []byte(input))
 	if err != nil {
 		return nil, err
 	}

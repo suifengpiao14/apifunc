@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/logchan/v2"
 	"github.com/suifengpiao14/packethandler"
-	"github.com/suifengpiao14/pathtransfer"
 	"github.com/suifengpiao14/torm"
 )
 
@@ -44,7 +43,7 @@ func (c *Container) RegisterAPI(capi *apiCompiled) {
 	}
 }
 
-//RegisterAPIHandler 业务逻辑处理函数需要提前注册，方便编译时从这里取
+// RegisterAPIHandler 业务逻辑处理函数需要提前注册，方便编译时从这里取
 func (c *Container) RegisterAPIHandler(method string, route string, logicHandler DynamicLogicFn) {
 	c.lockCApi.Lock()
 	defer c.lockCApi.Unlock()
@@ -89,7 +88,7 @@ func (c *Container) setLogger(fn func(logInfo logchan.LogInforInterface, typeNam
 	logchan.SetLoggerWriter(fn)
 }
 
-//RegisterAPIByModel 通过模型注册路由
+// RegisterAPIByModel 通过模型注册路由
 func (c *Container) RegisterAPIByModel(apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
 
 	sources := make(torm.Sources, 0)
@@ -186,26 +185,24 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels)
 	return setting, nil
 }
 
-//RegisterRouteFn 给router 注册路由
+// RegisterRouteFn 给router 注册路由
 func (c *Container) RegisterRouteFn(routeFn func(method string, path string)) {
 	for _, api := range c.apis {
 		routeFn(api._api.Method, api._api.Route)
 	}
 }
 
-//ApiHandlerRunTormFn 内置运行单个Torm业务逻辑函数
+// ApiHandlerRunTormFn 内置运行单个Torm业务逻辑函数
 func ApiHandlerRunTormFn(tor torm.Torm) (logicHandler DynamicLogicFn) {
 	tormName := tor.Name
 	logicHandler = func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error) {
 		switch strings.ToUpper(tor.Source.Type) {
 		case torm.SOURCE_TYPE_SQL:
-			inputName := strings.Trim(fmt.Sprintf("%s%s", tor.Name, pathtransfer.Transfer_Direction_input), ".")
-			data := injectObject.ConvertInput(inputName, input)
-			out, err = injectObject.ExecSQLTPL(ctx, tormName, data)
+			out, err = injectObject.ExecSQLTPL(ctx, tormName, input)
 			if err != nil {
 				return nil, err
 			}
-			return out, err
+			return out, nil
 		default:
 			err = errors.Errorf("not implement source type:%s", torm.SOURCE_TYPE_SQL)
 			return nil, err
@@ -214,7 +211,7 @@ func ApiHandlerRunTormFn(tor torm.Torm) (logicHandler DynamicLogicFn) {
 	return logicHandler
 }
 
-//ApiHandlerEmptyFn 内置空业务逻辑函数，使用mock数据
+// ApiHandlerEmptyFn 内置空业务逻辑函数，使用mock数据
 func ApiHandlerEmptyFn() (logicHandler DynamicLogicFn) {
 	logicHandler = func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error) {
 		return out, nil

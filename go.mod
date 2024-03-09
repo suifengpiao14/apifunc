@@ -11,8 +11,8 @@ require (
 	github.com/suifengpiao14/pathtransfer v0.0.4
 	github.com/suifengpiao14/sqlexec v0.0.31
 	github.com/suifengpiao14/sshmysql v0.0.5
-	github.com/suifengpiao14/stream v0.0.63
-	github.com/suifengpiao14/torm v0.0.31
+	github.com/suifengpiao14/stream v0.0.64
+	github.com/suifengpiao14/torm v0.0.33
 	github.com/tidwall/gjson v1.17.1
 )
 
@@ -44,7 +44,7 @@ require (
 	github.com/jfcote87/sshdb v0.5.3 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/juju/errors v1.0.0 // indirect
-	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
