@@ -240,6 +240,16 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 	}
 
 	allPacketHandlers := make(packethandler.PacketHandlers, 0)
+	inputPathTransfers, outputPathTransfers := tormIm.Transfers.SplitInOut(tormIm.Name)
+
+	//转换为代码中期望的数据格式
+	transferHandler := packet.NewTransferPacketHandler(inputPathTransfers.Reverse().GjsonPath(), outputPathTransfers.GjsonPath())
+	allPacketHandlers.Append(transferHandler)
+
+	namespaceTrim := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_input) //去除命名空间
+	namespaceAdd := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_output) // 补充命名空间
+	allPacketHandlers.Append(packet.NewJsonTrimAddNamespacePacket(namespaceTrim, namespaceAdd))
+
 	databaseName, err := sqlexec.GetDatabaseName(db)
 	if err != nil {
 		return nil, err
