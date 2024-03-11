@@ -169,13 +169,14 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels)
 		if err != nil {
 			return nil, err
 		}
+		tplStr := tormModels.GetTpl()
 		for _, tormModel := range tormModels {
 			flows := packethandler.Flow(strings.Split(strings.TrimSpace(tormModel.Flow), ","))
 			flows.DropEmpty()
 			if len(flows) == 0 {
 				flows = DefaultTormFlows
 			}
-			torms, err := torm.ParserTpl(source, tormModel.Tpl, tormModel.TransferLine, flows, nil)
+			torms, err := torm.ParserTpl(source, tplStr, tormModel.TransferLine, flows, nil)
 			if err != nil {
 				return nil, err
 			}

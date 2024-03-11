@@ -1,6 +1,7 @@
 package apifunc
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 
@@ -139,13 +140,14 @@ func (ss *SourceModels) FillDDL() (err error) {
 }
 
 type TormModel struct {
-	TemplateID   string                    `json:"templateId"`
-	Title        string                    `json:"title"`
-	SourceID     string                    `json:"sourceId"`
-	Tpl          string                    `json:"tpl"`
-	Type         string                    `json:"type"`
-	TransferLine pathtransfer.TransferLine `json:"transferLine"`
-	Flow         string                    `json:"flow"`
+	TemplateID       string                    `json:"templateId"`
+	SubTemplateNames []string                  `json:"SubTemplateNames"`
+	Title            string                    `json:"title"`
+	SourceID         string                    `json:"sourceId"`
+	Tpl              string                    `json:"tpl"`
+	Type             string                    `json:"type"`
+	TransferLine     pathtransfer.TransferLine `json:"transferLine"`
+	Flow             string                    `json:"flow"`
 }
 
 type TormModels []TormModel
@@ -173,4 +175,25 @@ func (tModels TormModels) GroupBySourceId() (out map[string]TormModels) {
 		out[t.SourceID] = append(out[t.SourceID], t)
 	}
 	return out
+}
+
+//GetTpl 包含所有define，当使用子模板时有效
+func (tModels TormModels) GetTpl() (tpl string) {
+	var w bytes.Buffer
+	for _, t := range tModels {
+		w.WriteString(t.Tpl)
+		w.WriteString("\n")
+	}
+	return w.String()
+}
+
+//GetTpl 包含所有define，当使用子模板时有效
+func (tModels TormModels) GetTransferLine() (transferLine pathtransfer.TransferLine) {
+	var w bytes.Buffer
+	for _, t := range tModels {
+		w.WriteString(string(t.TransferLine))
+		w.WriteString("\n")
+	}
+	transferLine = pathtransfer.TransferLine(w.String())
+	return transferLine
 }

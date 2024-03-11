@@ -3,6 +3,7 @@
 
 <RECORD>
 <template_id>GetByHsbRemark</template_id>
+<sub_template_id></sub_template_id>
 <title>回收宝备注转获取闲鱼备注</title>
 <source_id>xyxz_manage_db</source_id>
 <tpl>{{define "GetByHsbRemark"}}
@@ -37,6 +38,7 @@ GetByHsbRemark.output.Fauto_update_time:dictionary.xyxz_manage_db.t_xyxz_xy_canc
 
 <RECORD>
 <template_id>InsertHsbRemark</template_id>
+<sub_template_id></sub_template_id>
 <title>新增回收宝备注</title>
 <source_id>xyxz_manage_db</source_id>
 <tpl>{{define "InsertHsbRemark"}} 

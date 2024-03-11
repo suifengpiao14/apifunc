@@ -71,13 +71,14 @@ func (ss SourceRecords) FilterByEnv(env string) (out SourceRecords) {
 }
 
 type TemplateRecord struct {
-	TemplateID   string `xml:"template_id"`
-	Title        string `xml:"title"`
-	SourceID     string `xml:"source_id"`
-	Tpl          string `xml:"tpl"`
-	Type         string `xml:"type"`
-	TransferLine string `xml:"transfer_line"`
-	Flow         string `xml:"flow"`
+	TemplateID      string `xml:"template_id"`
+	SubTemplateID string `xml:"sub_template_id"`
+	Title           string `xml:"title"`
+	SourceID        string `xml:"source_id"`
+	Tpl             string `xml:"tpl"`
+	Type            string `xml:"type"`
+	TransferLine    string `xml:"transfer_line"`
+	Flow            string `xml:"flow"`
 }
 
 type TemplateRecords []TemplateRecord
@@ -183,7 +184,7 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 			InputSchema:      apiRecord.InputSchema,
 			OutputSchema:     apiRecord.OutputSchema,
 			PathTransferLine: pathtransfer.TransferLine(apiRecord.TransferLine),
-			Flow:            apiRecord.Flow,
+			Flow:             apiRecord.Flow,
 		}
 		apiModels = append(apiModels, apiModel)
 	}
