@@ -1,0 +1,20 @@
+
+<?xml version="1.0" standalone="yes"?>
+<RECORDS>
+
+<RECORD>
+<language>go</language>
+<script>func SetLimit(index int,size int)(offset int,limit int){
+    limit=size
+    offset=index*size
+    return offset,limit
+}
+</script>
+<transfer_line>func.SetLimit.input.index@int:Dictionary.pagination.index
+func.SetLimit.input.size@int:Dictionary.pagination.size
+func.SetLimit.output.offset@int:Dictionary.limit.offset
+func.SetLimit.output.size@int:Dictionary.limit.size
+</transfer_line>
+</RECORD>
+
+</RECORDS>

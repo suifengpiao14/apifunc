@@ -13,6 +13,10 @@ import (
 	"github.com/suifengpiao14/pathtransfer"
 )
 
+type xmlDictionaryTable struct {
+	XMLName xml.Name           `xml:"RECORDS"`
+	Records []DictionaryRecord `xml:"RECORD"`
+}
 type xmlApiTable struct {
 	XMLName xml.Name    `xml:"RECORDS"`
 	Records []ApiRecord `xml:"RECORD"`
@@ -25,6 +29,14 @@ type xmlTemplateTable struct {
 	XMLName xml.Name         `xml:"RECORDS"`
 	Records []TemplateRecord `xml:"RECORD"`
 }
+
+type DictionaryRecord struct {
+	Language     string `xml:"language"`
+	Script       string `xml:"script"`
+	TransferLine string `xml:"transfer_line"`
+}
+
+type DictionaryRecords []DictionaryRecord
 
 type ApiRecord struct {
 	ApiID        string `xml:"api_id"`
@@ -71,14 +83,14 @@ func (ss SourceRecords) FilterByEnv(env string) (out SourceRecords) {
 }
 
 type TemplateRecord struct {
-	TemplateID      string `xml:"template_id"`
+	TemplateID    string `xml:"template_id"`
 	SubTemplateID string `xml:"sub_template_id"`
-	Title           string `xml:"title"`
-	SourceID        string `xml:"source_id"`
-	Tpl             string `xml:"tpl"`
-	Type            string `xml:"type"`
-	TransferLine    string `xml:"transfer_line"`
-	Flow            string `xml:"flow"`
+	Title         string `xml:"title"`
+	SourceID      string `xml:"source_id"`
+	Tpl           string `xml:"tpl"`
+	Type          string `xml:"type"`
+	TransferLine  string `xml:"transfer_line"`
+	Flow          string `xml:"flow"`
 }
 
 type TemplateRecords []TemplateRecord
@@ -114,8 +126,25 @@ func loadDataFromFile(rootDir string, patten string) (out [][]byte, err error) {
 }
 
 //LoadXmlDB 从XML中加载数据
-func LoadXmlDB(env string, apiFileDir string, sourceFileDir string, tormFileDir string) (apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels, err error) {
-	apiRecords, sourceRecords, templateRecords := make(ApiRecords, 0), make(SourceRecords, 0), make(TemplateRecords, 0)
+func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir string, tormFileDir string) (apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels, err error) {
+	dictionaryRecords, apiRecords, sourceRecords, templateRecords := make(DictionaryRecords, 0), make(ApiRecords, 0), make(SourceRecords, 0), make(TemplateRecords, 0)
+
+	dictRecordAllFile, err := loadDataFromFile(dictFileDir, "**/*.xml")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	for _, dicReordOneFile := range dictRecordAllFile {
+		reader := bytes.NewReader(dicReordOneFile)
+		decodeXML := xml.NewDecoder(reader)
+		decodeXML.Strict = false
+		table := xmlDictionaryTable{}
+		err = decodeXML.Decode(&table)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		dictionaryRecords = append(dictionaryRecords, table.Records...)
+	}
+
 	apiRecordAllFile, err := loadDataFromFile(apiFileDir, "**/*.xml")
 	if err != nil {
 		return nil, nil, nil, err

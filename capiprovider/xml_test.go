@@ -10,10 +10,11 @@ import (
 
 func TestLoadFromXmlDB(t *testing.T) {
 	env := "dev"
+	dictFileDir := `./example/xmldb/dictionary`
 	apiDir := `./example/xmldb/api`
 	sourceDir := `./example/xmldb/source`
 	tormDir := `./example/xmldb/template`
-	apiModels, sourceModels, tormModels, err := capiprovider.LoadXmlDB(env, apiDir, sourceDir, tormDir)
+	apiModels, sourceModels, tormModels, err := capiprovider.LoadXmlDB(env, dictFileDir, apiDir, sourceDir, tormDir)
 	require.NoError(t, err)
 	fmt.Println(apiModels)
 	fmt.Println(tormModels)
