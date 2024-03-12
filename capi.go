@@ -94,6 +94,7 @@ type Api struct {
 	ErrorHandler        stream.ErrorHandler
 	Dependents          Dependents `json:"dependents"`
 	_apiStream          *stream.Stream
+	TransferFuncs       pathtransfer.TransferFuncs `json:"transferFuncs"`
 }
 
 // api默认流程
@@ -132,10 +133,11 @@ func (s Api) PackSchema() (lineschema string) {
 // }
 
 type apiCompiled struct {
-	template   *template.Template
-	_api       Api
-	_container *Container
-	_Torms     torm.Torms
+	template       *template.Template
+	_api           Api
+	_container     *Container
+	_Torms         torm.Torms
+	_TransferFuncs pathtransfer.TransferFuncs
 }
 
 var ERROR_COMPILED_API = errors.New("compiled api error")
@@ -280,19 +282,4 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		return nil, err
 	}
 	return out, nil
-}
-
-func convertFloatsToInt(data map[string]interface{}) {
-	for key, value := range data {
-		switch v := value.(type) {
-		case float64:
-			// 尝试将 float64 转换为 int
-			if float64(int(v)) == v {
-				data[key] = int(v)
-			}
-		case map[string]interface{}:
-			// 递归处理嵌套的 map
-			convertFloatsToInt(v)
-		}
-	}
 }

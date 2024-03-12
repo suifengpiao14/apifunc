@@ -87,6 +87,14 @@ type ApiModel struct {
 
 type ApiModels []ApiModel
 
+type TransferFuncModel struct {
+	Language     string                    `xml:"language"`
+	Script       string                    `xml:"script"`
+	TransferLine pathtransfer.TransferLine `xml:"transfer_line"`
+}
+
+type TransferFuncModels []TransferFuncModel
+
 type SourceModel struct {
 	SourceID   string `json:"sourceId"`
 	ENV        string `json:"env"`

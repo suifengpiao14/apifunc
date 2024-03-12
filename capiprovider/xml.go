@@ -14,8 +14,8 @@ import (
 )
 
 type xmlDictionaryTable struct {
-	XMLName xml.Name           `xml:"RECORDS"`
-	Records []DictionaryRecord `xml:"RECORD"`
+	XMLName xml.Name             `xml:"RECORDS"`
+	Records []TransferFuncRecord `xml:"RECORD"`
 }
 type xmlApiTable struct {
 	XMLName xml.Name    `xml:"RECORDS"`
@@ -30,13 +30,13 @@ type xmlTemplateTable struct {
 	Records []TemplateRecord `xml:"RECORD"`
 }
 
-type DictionaryRecord struct {
+type TransferFuncRecord struct {
 	Language     string `xml:"language"`
 	Script       string `xml:"script"`
 	TransferLine string `xml:"transfer_line"`
 }
 
-type DictionaryRecords []DictionaryRecord
+type TransferFuncRecords []TransferFuncRecord
 
 type ApiRecord struct {
 	ApiID        string `xml:"api_id"`
@@ -126,12 +126,12 @@ func loadDataFromFile(rootDir string, patten string) (out [][]byte, err error) {
 }
 
 //LoadXmlDB 从XML中加载数据
-func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir string, tormFileDir string) (apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels, err error) {
-	dictionaryRecords, apiRecords, sourceRecords, templateRecords := make(DictionaryRecords, 0), make(ApiRecords, 0), make(SourceRecords, 0), make(TemplateRecords, 0)
+func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir string, tormFileDir string) (transferFuncModels apifunc.TransferFuncModels, apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels, err error) {
+	transferFuncRecords, apiRecords, sourceRecords, templateRecords := make(TransferFuncRecords, 0), make(ApiRecords, 0), make(SourceRecords, 0), make(TemplateRecords, 0)
 
 	dictRecordAllFile, err := loadDataFromFile(dictFileDir, "**/*.xml")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	for _, dicReordOneFile := range dictRecordAllFile {
 		reader := bytes.NewReader(dicReordOneFile)
@@ -140,14 +140,14 @@ func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir 
 		table := xmlDictionaryTable{}
 		err = decodeXML.Decode(&table)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
-		dictionaryRecords = append(dictionaryRecords, table.Records...)
+		transferFuncRecords = append(transferFuncRecords, table.Records...)
 	}
 
 	apiRecordAllFile, err := loadDataFromFile(apiFileDir, "**/*.xml")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	for _, apiReordOneFile := range apiRecordAllFile {
 		reader := bytes.NewReader(apiReordOneFile)
@@ -156,7 +156,7 @@ func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir 
 		table := xmlApiTable{}
 		err = decodeXML.Decode(&table)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 		apiRecords = append(apiRecords, table.Records...)
 
@@ -164,7 +164,7 @@ func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir 
 
 	sourceAllFile, err := loadDataFromFile(sourceFileDir, "**/*.xml")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	for _, sourceOneFile := range sourceAllFile {
 		reader := bytes.NewReader(sourceOneFile)
@@ -173,7 +173,7 @@ func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir 
 		table := xmlSourceTable{}
 		err = decodeXML.Decode(&table)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 		sourceRecords = append(sourceRecords, table.Records...)
 	}
@@ -181,7 +181,7 @@ func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir 
 	sourceRecords = sourceRecords.FilterByEnv(env)
 	templateAllFile, err := loadDataFromFile(tormFileDir, "**/*.xml")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	for _, templateOneFile := range templateAllFile {
 		reader := bytes.NewReader(templateOneFile)
@@ -190,18 +190,28 @@ func LoadXmlDB(env string, dictFileDir string, apiFileDir string, sourceFileDir 
 		table := xmlTemplateTable{}
 		err = decodeXML.Decode(&table)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 		templateRecords = append(templateRecords, table.Records...)
 	}
 
-	apiModels, sourceModels, tormModels = convertToModel(apiRecords, sourceRecords, templateRecords)
-	return apiModels, sourceModels, tormModels, nil
+	transferFuncModels, apiModels, sourceModels, tormModels = convertToModel(transferFuncRecords, apiRecords, sourceRecords, templateRecords)
+	return transferFuncModels, apiModels, sourceModels, tormModels, nil
 }
 
-func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTemplateRecords TemplateRecords) (apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels) {
+func convertToModel(transferFuncRecords TransferFuncRecords, dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTemplateRecords TemplateRecords) (transferFuncModels apifunc.TransferFuncModels, apiModels apifunc.ApiModels, sourceModels apifunc.SourceModels, tormModels apifunc.TormModels) {
 
-	apiModels, sourceModels, tormModels = make(apifunc.ApiModels, 0), make(apifunc.SourceModels, 0), make(apifunc.TormModels, 0)
+	transferFuncModels, apiModels, sourceModels, tormModels = make(apifunc.TransferFuncModels, 0), make(apifunc.ApiModels, 0), make(apifunc.SourceModels, 0), make(apifunc.TormModels, 0)
+
+	for _, transferFuncRecord := range transferFuncRecords {
+		transferFuncModel := apifunc.TransferFuncModel{
+			Language:     transferFuncRecord.Language,
+			Script:       transferFuncRecord.Script,
+			TransferLine: pathtransfer.TransferLine(transferFuncRecord.TransferLine),
+		}
+		transferFuncModels = append(transferFuncModels, transferFuncModel)
+	}
+
 	for _, apiRecord := range dbApiRecords {
 		apiModel := apifunc.ApiModel{
 			ApiId:            apiRecord.ApiID,
@@ -240,6 +250,6 @@ func convertToModel(dbApiRecords ApiRecords, dbSourceRecords SourceRecords, dbTe
 		}
 		tormModels = append(tormModels, tormModel)
 	}
-	return apiModels, sourceModels, tormModels
+	return transferFuncModels, apiModels, sourceModels, tormModels
 
 }

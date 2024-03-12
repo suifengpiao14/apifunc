@@ -14,8 +14,9 @@ func TestLoadFromXmlDB(t *testing.T) {
 	apiDir := `./example/xmldb/api`
 	sourceDir := `./example/xmldb/source`
 	tormDir := `./example/xmldb/template`
-	apiModels, sourceModels, tormModels, err := capiprovider.LoadXmlDB(env, dictFileDir, apiDir, sourceDir, tormDir)
+	transferFuncModels, apiModels, sourceModels, tormModels, err := capiprovider.LoadXmlDB(env, dictFileDir, apiDir, sourceDir, tormDir)
 	require.NoError(t, err)
+	fmt.Println(transferFuncModels)
 	fmt.Println(apiModels)
 	fmt.Println(tormModels)
 	err = sourceModels.FillDDL()

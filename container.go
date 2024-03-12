@@ -89,7 +89,7 @@ func (c *Container) setLogger(fn func(logInfo logchan.LogInforInterface, typeNam
 }
 
 // RegisterAPIByModel 通过模型注册路由
-func (c *Container) RegisterAPIByModel(apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
+func (c *Container) RegisterAPIByModel(transferFuncModels TransferFuncModels, apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
 
 	sources := make(torm.Sources, 0)
 	for _, sourceModel := range sourceModels {
