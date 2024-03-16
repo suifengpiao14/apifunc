@@ -140,7 +140,7 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels)
 	}
 
 	transfers := apiModel.PathTransferLine.Transfer()
-	inTransfers, outTransfers := transfers.SplitInOut(apiModel.ApiId)
+	inTransfers, outTransfers := transfers.GetByNamespace(apiModel.ApiId).SplitInOut()
 	setting = &Setting{
 		Api: Api{
 			ApiName:             apiModel.ApiId,

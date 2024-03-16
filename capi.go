@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/pathtransfer"
+	"github.com/suifengpiao14/pathtransfer/script"
 	"github.com/suifengpiao14/sqlexec"
 	"github.com/suifengpiao14/stream"
 	"github.com/suifengpiao14/stream/packet"
@@ -94,7 +95,7 @@ type Api struct {
 	ErrorHandler        stream.ErrorHandler
 	Dependents          Dependents `json:"dependents"`
 	_apiStream          *stream.Stream
-	TransferFuncs       pathtransfer.TransferFuncs `json:"transferFuncs"`
+	ScriptEngine        script.ScriptI
 }
 
 // api默认流程
@@ -133,11 +134,11 @@ func (s Api) PackSchema() (lineschema string) {
 // }
 
 type apiCompiled struct {
-	template       *template.Template
-	_api           Api
-	_container     *Container
-	_Torms         torm.Torms
-	_TransferFuncs pathtransfer.TransferFuncs
+	template      *template.Template
+	_api          Api
+	_container    *Container
+	_Torms        torm.Torms
+	_ScriptEngine script.ScriptI
 }
 
 var ERROR_COMPILED_API = errors.New("compiled api error")
@@ -236,7 +237,7 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 	}
 
 	allPacketHandlers := make(packethandler.PacketHandlers, 0)
-	inputPathTransfers, outputPathTransfers := tormIm.Transfers.SplitInOut(tormIm.Name)
+	inputPathTransfers, outputPathTransfers := tormIm.Transfers.GetByNamespace(tormIm.Name).SplitInOut()
 
 	namespaceInput := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_input)   //去除命名空间
 	namespaceOutput := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_output) // 补充命名空间
