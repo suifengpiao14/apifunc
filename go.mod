@@ -3,12 +3,14 @@ module github.com/suifengpiao14/apifunc
 go 1.21.0
 
 require (
+	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
 	github.com/suifengpiao14/glob v0.0.4
+	github.com/suifengpiao14/goscript v0.0.2
 	github.com/suifengpiao14/logchan/v2 v2.0.24
 	github.com/suifengpiao14/packethandler v0.0.4
-	github.com/suifengpiao14/pathtransfer v0.0.6
+	github.com/suifengpiao14/pathtransfer v0.0.7
 	github.com/suifengpiao14/sqlexec v0.0.31
 	github.com/suifengpiao14/sshmysql v0.0.5
 	github.com/suifengpiao14/stream v0.0.64
@@ -26,7 +28,6 @@ require (
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/d5/tengo/v2 v2.16.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/evanphx/json-patch/v5 v5.8.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

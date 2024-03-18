@@ -6,10 +6,11 @@ import (
 	"strings"
 	"text/template"
 
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/pkg/errors"
+	"github.com/suifengpiao14/goscript"
 	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/pathtransfer"
-	"github.com/suifengpiao14/pathtransfer/script"
 	"github.com/suifengpiao14/sqlexec"
 	"github.com/suifengpiao14/stream"
 	"github.com/suifengpiao14/stream/packet"
@@ -80,6 +81,13 @@ type Setting struct {
 	Api             Api        `json:"api"`
 	Torms           torm.Torms `json:"torms"` // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
 	BusinessLogicFn DynamicLogicFn
+	Project         Project `json:"project"`
+}
+
+type Project struct {
+	CurrentLanguage string
+	FuncTransfers   pathtransfer.Transfers
+	Scripts         goscript.Scripts
 }
 
 type Api struct {
@@ -95,7 +103,8 @@ type Api struct {
 	ErrorHandler        stream.ErrorHandler
 	Dependents          Dependents `json:"dependents"`
 	_apiStream          *stream.Stream
-	ScriptEngine        script.ScriptI
+	_ScriptEngines      goscript.ScriptIs
+	_Project            Project
 }
 
 // api默认流程
@@ -134,11 +143,10 @@ func (s Api) PackSchema() (lineschema string) {
 // }
 
 type apiCompiled struct {
-	template      *template.Template
-	_api          Api
-	_container    *Container
-	_Torms        torm.Torms
-	_ScriptEngine script.ScriptI
+	template   *template.Template
+	_api       Api
+	_container *Container
+	_Torms     torm.Torms
 }
 
 var ERROR_COMPILED_API = errors.New("compiled api error")
@@ -211,6 +219,22 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 		return nil, err
 	}
 	capi._api._apiStream = stream.NewStream(capi._api.ApiName, nil, packetHandlers...)
+	project := setting.Project
+	for language, scripts := range project.Scripts.GroupByLanguage() {
+		engine, err := goscript.NewScriptEngine(language)
+		if err != nil {
+			return nil, err
+		}
+		for _, script := range scripts {
+			engine.WriteCode(script.Code)
+		}
+		callScript, err := project.FuncTransfers.GetCallFnScript(language)
+		if err != nil {
+			return nil, err
+		}
+		engine.WriteCode(callScript)
+		capi._api._ScriptEngines.Add(engine)
+	}
 	return capi, nil
 }
 
@@ -236,9 +260,26 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		return nil, err
 	}
 
-	allPacketHandlers := make(packethandler.PacketHandlers, 0)
 	inputPathTransfers, outputPathTransfers := tormIm.Transfers.GetByNamespace(tormIm.Name).SplitInOut()
+	funcName := pathtransfer.GetTransferFuncname(capi._api._Project.FuncTransfers, string(input), inputPathTransfers.GetAllDst())
+	if funcName != "" {
+		scriptEngine, err := capi._api._ScriptEngines.GetByLanguage(capi._api._Project.CurrentLanguage)
+		if err != nil {
+			return nil, err
+		}
+		callScript := scriptEngine.CallFuncScript(funcName, string(input))
+		funcReturn, err := scriptEngine.Run(callScript)
+		if err != nil {
+			return nil, err
+		}
+		newInput, err := jsonpatch.MergePatch(input, []byte(funcReturn))
+		if err != nil {
+			return nil, err
+		}
+		input = newInput // 通过动态脚本修改入参
+	}
 
+	allPacketHandlers := make(packethandler.PacketHandlers, 0)
 	namespaceInput := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_input)   //去除命名空间
 	namespaceOutput := fmt.Sprintf("%s%s", tormIm.Name, pathtransfer.Transfer_Direction_output) // 补充命名空间
 	inputGopath := inputPathTransfers.Reverse().ModifyDstPath(func(path string) (newPath string) {

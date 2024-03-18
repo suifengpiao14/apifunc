@@ -95,8 +95,8 @@ github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymF
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
-github.com/evanphx/json-patch/v5 v5.8.1 h1:iPEdwg0XayoS+E7Mth9JxwUtOgyVxnDTXHtKhZPlZxA=
-github.com/evanphx/json-patch/v5 v5.8.1/go.mod h1:VNkHZ/282BpEyt/tObQO8s5CMPmYYq14uClGH4abBuQ=
+github.com/evanphx/json-patch/v5 v5.9.0 h1:kcBlZQbplgElYIlo/n1hJbls2z/1awpXxpRi0/FOJfg=
+github.com/evanphx/json-patch/v5 v5.9.0/go.mod h1:VNkHZ/282BpEyt/tObQO8s5CMPmYYq14uClGH4abBuQ=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
@@ -418,6 +418,8 @@ github.com/suifengpiao14/gjsonmodifier v0.2.2 h1:sWc7htKEoWc0G4ZnmyPGR6Rg7/0dPjK
 github.com/suifengpiao14/gjsonmodifier v0.2.2/go.mod h1:cYW5OJUld4QJCwIXS7qj9EENUTFyzy8tPyNdCpHvRUs=
 github.com/suifengpiao14/glob v0.0.4 h1:alVT/YdQkBOkohqSifi8uduRX0tb7eshkHcSHbLkIig=
 github.com/suifengpiao14/glob v0.0.4/go.mod h1:X1oZI+fUWNgQt3YspUTTNd0r5XyhVICEDmgcAom4ZtQ=
+github.com/suifengpiao14/goscript v0.0.2 h1:qg5ToadkYqB5mDoA9oqph/JzXDhieOf55MoPfKi1bU8=
+github.com/suifengpiao14/goscript v0.0.2/go.mod h1:w0/kZaggI7GK0cGU+AtgzKm0zGlNN3NWHJb+2zj3I7Y=
 github.com/suifengpiao14/httpraw v0.0.6 h1:F8CtZMbS/H/OHd2J5pTJqTT8LW5LxNzZYcUN2yBbwdE=
 github.com/suifengpiao14/httpraw v0.0.6/go.mod h1:+GI3N3piIdeeXHkQR59pApn3T93oy1cLcHp3CR80DJM=
 github.com/suifengpiao14/kvstruct v0.0.14 h1:c5Eb6AsBN0gTVGk/Vj05aEiJ79j+pNNo3aIBw09EuMo=
@@ -428,8 +430,8 @@ github.com/suifengpiao14/logchan/v2 v2.0.24 h1:eZ74RflQlg8lllfS7OnyK0f4TatXCu4Cd
 github.com/suifengpiao14/logchan/v2 v2.0.24/go.mod h1:lUwbf/zfI0vQcGeKt77WUvsMj/Dx/g6y463oyPNIJGU=
 github.com/suifengpiao14/packethandler v0.0.4 h1:oojmUgTkQ2Ylznp05QriAVTdVMCIRme4rgfdIouASbQ=
 github.com/suifengpiao14/packethandler v0.0.4/go.mod h1:v/fAGRlx6MQTzXJjza6Az66P3787x1+ryNmE4NXoitU=
-github.com/suifengpiao14/pathtransfer v0.0.6 h1:H0cpcx1QWFKDx2veHCQJlyhlJG9BMzcNfASMqc0becA=
-github.com/suifengpiao14/pathtransfer v0.0.6/go.mod h1:2K9e82u99flLQq0WBqwfWRRbazhEOA5SDy/ZtwqoKHw=
+github.com/suifengpiao14/pathtransfer v0.0.7 h1:OG8ecQ7cI8sA94gZ6SOMGJ48gySdZjdRixQxL/zS+p4=
+github.com/suifengpiao14/pathtransfer v0.0.7/go.mod h1:FuevT6Ap2I7GpCFbb4f1UiK/oc3/6HnRSynj54jato0=
 github.com/suifengpiao14/sdkgolib v0.0.22 h1:cEqk9u7oB95EnVwsW4RncSQHHC0MOLWnoaTXW2XwB+U=
 github.com/suifengpiao14/sdkgolib v0.0.22/go.mod h1:CUQUcBl1GWvB3JQDC6AHA/k2jvRrBH2drnYMX58vadE=
 github.com/suifengpiao14/sqlexec v0.0.31 h1:0hRN7/DC6o9QAf3/yy32Vl0d0Z6+aQU58PBkQzi5khU=
