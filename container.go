@@ -7,8 +7,10 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+	"github.com/suifengpiao14/goscript"
 	"github.com/suifengpiao14/logchan/v2"
 	"github.com/suifengpiao14/packethandler"
+	"github.com/suifengpiao14/pathtransfer"
 	"github.com/suifengpiao14/torm"
 )
 
@@ -89,7 +91,7 @@ func (c *Container) setLogger(fn func(logInfo logchan.LogInforInterface, typeNam
 }
 
 // RegisterAPIByModel 通过模型注册路由
-func (c *Container) RegisterAPIByModel(transferFuncModels TransferFuncModels, apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
+func (c *Container) RegisterAPIByModel(scriptLanguage string, transferFuncModels TransferFuncModels, apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
 
 	sources := make(torm.Sources, 0)
 	for _, sourceModel := range sourceModels {
@@ -99,9 +101,24 @@ func (c *Container) RegisterAPIByModel(transferFuncModels TransferFuncModels, ap
 		}
 		sources = append(sources, source)
 	}
+	project := Project{
+		CurrentLanguage: scriptLanguage,
+		FuncTransfers:   make(pathtransfer.Transfers, 0),
+		Scripts:         make(goscript.Scripts, 0),
+	}
+	for _, transferFuncModel := range transferFuncModels {
+		if transferFuncModel.Script != "" {
+			script := goscript.Script{
+				Language: transferFuncModel.Language,
+				Code:     transferFuncModel.Script,
+			}
+			project.Scripts = append(project.Scripts, script)
+		}
+		project.FuncTransfers.AddReplace(transferFuncModel.TransferLine.Transfer()...)
+	}
 
 	for _, apiModel := range apiModels {
-		setting, err := makeSetting(apiModel, sources, tormModels)
+		setting, err := makeSetting(project, apiModel, sources, tormModels)
 		if err != nil {
 			return err
 		}
@@ -132,7 +149,7 @@ func (c *Container) RegisterAPIByModel(transferFuncModels TransferFuncModels, ap
 	return nil
 }
 
-func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels) (setting *Setting, err error) {
+func makeSetting(project Project, apiModel ApiModel, sources torm.Sources, tormModels TormModels) (setting *Setting, err error) {
 	flows := packethandler.Flow(strings.Split(strings.TrimSpace(apiModel.Flow), ","))
 	flows.DropEmpty()
 	if len(flows) == 0 {
@@ -152,6 +169,7 @@ func makeSetting(apiModel ApiModel, sources torm.Sources, tormModels TormModels)
 			OutputPathTransfers: outTransfers,
 			Flow:                flows,
 		},
+		Project: project,
 
 		Torms: make(torm.Torms, 0),
 	}
