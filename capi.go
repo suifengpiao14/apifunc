@@ -24,6 +24,7 @@ var DefaultAPIFlows = packethandler.Flow{
 	lineschemapacket.PACKETHANDLER_NAME_MergeDefaultPacketHandler,
 	lineschemapacket.PACKETHANDLER_NAME_TransferTypeFormatPacket,
 	packet.PACKETHANDLER_NAME_TransferPacketHandler,
+	packet.PACKETHANDLER_NAME_JsonMergeInputPacket,
 	PACKETHANDLER_NAME_API_LOGIC,
 }
 
@@ -186,6 +187,7 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 	}
 
 	packetHandler.Append(lineschemaPacketHandlers...)
+	packetHandler.Append(packet.NewJsonMergeInputPacket())                                              //增加合并输入数据
 	namespaceInput := fmt.Sprintf("%s%s", setting.Api.ApiName, pathtransfer.Transfer_Direction_input)   // 补充命名空间
 	namespaceOutput := fmt.Sprintf("%s%s", setting.Api.ApiName, pathtransfer.Transfer_Direction_output) // 去除命名空间
 	inputTransfer := setting.Api.InputPathTransfers.ModifySrcPath(func(path string) (newPath string) {
@@ -220,6 +222,7 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 	}
 	capi._api._apiStream = stream.NewStream(capi._api.ApiName, nil, packetHandlers...)
 	project := setting.Project
+	capi._api._Project = project
 	for language, scripts := range project.Scripts.GroupByLanguage() {
 		engine, err := goscript.NewScriptEngine(language)
 		if err != nil {
@@ -261,18 +264,25 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 	}
 
 	inputPathTransfers, outputPathTransfers := tormIm.Transfers.GetByNamespace(tormIm.Name).SplitInOut()
-	funcName := pathtransfer.GetTransferFuncname(capi._api._Project.FuncTransfers, string(input), inputPathTransfers.GetAllDst())
+	funcName, err := pathtransfer.GetTransferFuncname(capi._api._Project.FuncTransfers, string(input), inputPathTransfers.GetAllDst())
+	if err != nil {
+		return nil, err
+	}
 	if funcName != "" {
+		funcTransfers := capi._api._Project.FuncTransfers.GetByNamespace(pathtransfer.JoinPath(pathtransfer.Transfer_Top_Namespace_Func, funcName))
+		funcInTransfers, funcOutTransfers := funcTransfers.SplitInOut()
+		funcInput := gjson.GetBytes(input, funcInTransfers.Reverse().GjsonPath()).String()
 		scriptEngine, err := capi._api._ScriptEngines.GetByLanguage(capi._api._Project.CurrentLanguage)
 		if err != nil {
 			return nil, err
 		}
-		callScript := scriptEngine.CallFuncScript(funcName, string(input))
+		callScript := scriptEngine.CallFuncScript(funcName, funcInput)
 		funcReturn, err := scriptEngine.Run(callScript)
 		if err != nil {
 			return nil, err
 		}
-		newInput, err := jsonpatch.MergePatch(input, []byte(funcReturn))
+		funcOut := gjson.Get(funcReturn, funcOutTransfers.GjsonPath()).String()
+		newInput, err := jsonpatch.MergePatch(input, []byte(funcOut))
 		if err != nil {
 			return nil, err
 		}
