@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/goscript"
 	"github.com/suifengpiao14/logchan/v2"
@@ -126,13 +127,20 @@ func (c *Container) RegisterAPIByModel(scriptLanguage string, transferFuncModels
 		if errors.Is(err, ERROR_NOT_FOUND_DYNAMIC_LOGICFN_FUNC) {
 			err = nil
 			logicFn = ApiHandlerEmptyFn() // 所有的都以empty 做保底逻辑
-			tormName := setting.Api.Dependents.FilterByType(Dependent_Type_Torm).First()
-			if tormName != "" {
-				tor, err := setting.Torms.GetByName(tormName)
+			tormDependents := setting.Api.Dependents.FilterByType(Dependent_Type_Torm)
+			tors := make([]torm.Torm, 0)
+			for _, dependent := range tormDependents {
+				if dependent.Fullname == "" {
+					continue
+				}
+				tor, err := setting.Torms.GetByName(dependent.Fullname)
 				if err != nil {
 					return err
 				}
-				logicFn = ApiHandlerRunTormFn(*tor)
+				tors = append(tors, *tor)
+			}
+			if len(tors) > 0 {
+				logicFn = ApiHandlerRunTormFn(tors...)
 			}
 
 		}
@@ -194,11 +202,18 @@ func makeSetting(project Project, apiModel ApiModel, sources torm.Sources, tormM
 			if len(flows) == 0 {
 				flows = DefaultTormFlows
 			}
-			torms, err := torm.ParserTpl(source, tplStr, tormModel.TransferLine, flows, nil)
+			torms, err := torm.ParserTpl(source, tplStr)
 			if err != nil {
 				return nil, err
 			}
-			setting.Torms.Add(torms...)
+			// 只处理当前torm
+			tor, err := torms.GetByName(tormModel.TemplateID)
+			if err != nil {
+				return nil, err
+			}
+			tor.Flow = flows
+			tor.Transfers = tormModel.TransferLine.Transfer()
+			setting.Torms.AddReplace(*tor)
 		}
 	}
 	return setting, nil
@@ -212,20 +227,29 @@ func (c *Container) RegisterRouteFn(routeFn func(method string, path string)) {
 }
 
 // ApiHandlerRunTormFn 内置运行单个Torm业务逻辑函数
-func ApiHandlerRunTormFn(tor torm.Torm) (logicHandler DynamicLogicFn) {
-	tormName := tor.Name
+func ApiHandlerRunTormFn(tors ...torm.Torm) (logicHandler DynamicLogicFn) {
 	logicHandler = func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error) {
-		switch strings.ToUpper(tor.Source.Type) {
-		case torm.SOURCE_TYPE_SQL:
-			out, err = injectObject.ExecSQLTPL(ctx, tormName, input)
+		outputArr := make([][]byte, len(tors))
+		for i, tor := range tors {
+			switch strings.ToUpper(tor.Source.Type) {
+			case torm.SOURCE_TYPE_SQL:
+				outputArr[i], err = injectObject.ExecSQLTPL(ctx, tor.Name, input)
+				if err != nil {
+					return nil, err
+				}
+			default:
+				err = errors.Errorf("not implement source type:%s", torm.SOURCE_TYPE_SQL)
+				return nil, err
+			}
+		}
+		for _, subOut := range outputArr {
+			out, err = jsonpatch.MergePatch(out, subOut)
 			if err != nil {
 				return nil, err
 			}
-			return out, nil
-		default:
-			err = errors.Errorf("not implement source type:%s", torm.SOURCE_TYPE_SQL)
-			return nil, err
 		}
+		return out, nil
+
 	}
 	return logicHandler
 }

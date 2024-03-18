@@ -430,8 +430,8 @@ github.com/suifengpiao14/logchan/v2 v2.0.24 h1:eZ74RflQlg8lllfS7OnyK0f4TatXCu4Cd
 github.com/suifengpiao14/logchan/v2 v2.0.24/go.mod h1:lUwbf/zfI0vQcGeKt77WUvsMj/Dx/g6y463oyPNIJGU=
 github.com/suifengpiao14/packethandler v0.0.4 h1:oojmUgTkQ2Ylznp05QriAVTdVMCIRme4rgfdIouASbQ=
 github.com/suifengpiao14/packethandler v0.0.4/go.mod h1:v/fAGRlx6MQTzXJjza6Az66P3787x1+ryNmE4NXoitU=
-github.com/suifengpiao14/pathtransfer v0.0.8 h1:oUHLZeVvSbykB7puRdn4K7tjQk5tZyQg3qlDdgJ+06I=
-github.com/suifengpiao14/pathtransfer v0.0.8/go.mod h1:FuevT6Ap2I7GpCFbb4f1UiK/oc3/6HnRSynj54jato0=
+github.com/suifengpiao14/pathtransfer v0.0.9 h1:i1Sokc6xiKAFjFYZFCVNWwyBvrsdlzYkJyKWHrp1VpM=
+github.com/suifengpiao14/pathtransfer v0.0.9/go.mod h1:FuevT6Ap2I7GpCFbb4f1UiK/oc3/6HnRSynj54jato0=
 github.com/suifengpiao14/sdkgolib v0.0.22 h1:cEqk9u7oB95EnVwsW4RncSQHHC0MOLWnoaTXW2XwB+U=
 github.com/suifengpiao14/sdkgolib v0.0.22/go.mod h1:CUQUcBl1GWvB3JQDC6AHA/k2jvRrBH2drnYMX58vadE=
 github.com/suifengpiao14/sqlexec v0.0.31 h1:0hRN7/DC6o9QAf3/yy32Vl0d0Z6+aQU58PBkQzi5khU=
@@ -442,8 +442,8 @@ github.com/suifengpiao14/sshmysql v0.0.5 h1:hEoatYhUf9nCIsvm6wn7Nwr4PgE8LyUlY41S
 github.com/suifengpiao14/sshmysql v0.0.5/go.mod h1:YvD7LCCDjrK/zr1YkiCGZK5ETDevY9NKsQkJ2XDRb5Y=
 github.com/suifengpiao14/stream v0.0.65 h1:xrcns/vVO92KU5p21tt7qwa72kjgELwLQEGV6S/NmD0=
 github.com/suifengpiao14/stream v0.0.65/go.mod h1:YQ/qimgLr/tYJhMaZsZ1DJ/gbwjUwZJrqwWgYD/QKbM=
-github.com/suifengpiao14/torm v0.0.33 h1:ehwlsj0ZNhRZq9vGymCfhthPYpofM80TfhF7O9GYdcY=
-github.com/suifengpiao14/torm v0.0.33/go.mod h1:aTFOJYIoROlcxg/v1CSM/9mbpqKbvFCV4/aedL9g5pY=
+github.com/suifengpiao14/torm v0.0.34 h1:eB2Wj6ryYDLPhLw1kR7HiZooVD76wx6dkKcQ5b0/cbw=
+github.com/suifengpiao14/torm v0.0.34/go.mod h1:zd7DPGHlhl9dZjQExeMmqRlKbb7eWN5MWWsJqz4aktA=
 github.com/syndtr/goleveldb v0.0.0-20180815032940-ae2bd5eed72d/go.mod h1:Z4AUp2Km+PwemOoO/VB5AOx9XSsIItzFjoJlOSiYmn0=
 github.com/syyongx/php2go v0.9.8 h1:FNwV1y+RaZxl7KTm/ICh0Zrhca/70d5JRMpwByuQ1FM=
 github.com/syyongx/php2go v0.9.8/go.mod h1:meN2eIhhUoxOd2nMxbpe8g6cFPXI5O9/UAAuz7oDdzw=

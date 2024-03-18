@@ -38,7 +38,7 @@ func TestAPIMemory(t *testing.T) {
 		Type:      torm.SOURCE_TYPE_SQL,
 		Config:    sourceConfig,
 		Provider:  &MemoryDB,
-	}, tplStr, "nil", nil, nil)
+	}, tplStr)
 	require.NoError(t, err)
 	api := &apifunc.Setting{
 		Api: apifunc.Api{
