@@ -105,20 +105,20 @@ func TransferByFunc(funcTransfers pathtransfer.Transfers, scriptEngine goscript.
 	return out, nil
 }
 
-type DynamicLogicFn func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error)
+type DynamicLogicFn func(contextApiFunc ContextApiFunc, input []byte) (out []byte, err error)
 
 // Setting 配置
 type Setting struct {
-	Api             Api        `json:"api"`
-	Torms           torm.Torms `json:"torms"` // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
-	BusinessLogicFn DynamicLogicFn
-	Project         Project `json:"project"`
+	Api     Api        `json:"api"`
+	Torms   torm.Torms `json:"torms"` // 模板、资源配置（执行模板后调用什么资源）这里存在模板名称和资源绑定关系，需要在配置中提现这种关系
+	Project Project    `json:"project"`
 }
 
 type Project struct {
 	CurrentLanguage string
 	FuncTransfers   pathtransfer.Transfers
 	Scripts         goscript.Scripts
+	ScriptEngines   goscript.ScriptIs
 }
 
 type Api struct {
@@ -133,19 +133,84 @@ type Api struct {
 	OutputPathTransfers pathtransfer.Transfers `json:"outPathTransfers"`
 	ErrorHandler        stream.ErrorHandler
 	Dependents          Dependents `json:"dependents"`
-	_apiStream          *stream.Stream
 	_ScriptEngines      goscript.ScriptIs
 	_Project            Project
+	ContextApiFunc      *ContextApiFunc
+	PacketHandlers      packethandler.PacketHandlers
 }
 
-func (s Api) GetRoute() (mehtod string, path string) {
-	return s.Method, s.Route
+func (api Api) GetRoute() (mehtod string, path string) {
+	return api.Method, api.Route
 }
-func (s Api) UnpackSchema() (lineschema string) {
-	return s.RequestLineschema
+func (api Api) UnpackSchema() (lineschema string) {
+	return api.RequestLineschema
 }
-func (s Api) PackSchema() (lineschema string) {
-	return s.ResponseLineschema
+func (api Api) PackSchema() (lineschema string) {
+	return api.ResponseLineschema
+}
+
+func (api *Api) Init() (err error) {
+	err = api.InitPacketHandler()
+	if err != nil {
+		return err
+	}
+	api.Flow.DropEmpty()
+	return
+}
+
+func (api *Api) InitPacketHandler() (err error) {
+	packetHandlers := packethandler.NewPacketHandlers()
+	err = lineschemapacket.RegisterLineschemaPacket(api)
+	if err != nil {
+		return err
+	}
+	//验证、格式化 入参
+	lineschemaPacketHandlers, err := lineschemapacket.ServerpacketHandlers(api)
+	if err != nil {
+		err = errors.WithMessage(err, "lineschemapacket.ServerpacketHandlers")
+		return err
+	}
+
+	packetHandlers.Append(lineschemaPacketHandlers...)
+	packetHandlers.Append(packet.NewJsonMergeInputPacket())                                     //增加合并输入数据
+	namespaceInput := fmt.Sprintf("%s%s", api.ApiName, pathtransfer.Transfer_Direction_input)   // 去除命名空间
+	namespaceOutput := fmt.Sprintf("%s%s", api.ApiName, pathtransfer.Transfer_Direction_output) // 去除命名空间
+	inputTransfer := api.InputPathTransfers.ModifySrcPath(func(path string) (newPath string) {
+		return pathtransfer.TrimNamespace(path, namespaceInput)
+	}).GjsonPath()
+	outputTransfer := api.OutputPathTransfers.ModifySrcPath(func(path string) (newPath string) {
+		return pathtransfer.TrimNamespace(path, namespaceOutput)
+	}).Reverse().GjsonPath()
+
+	//转换为代码中期望的数据格式
+	transferHandler := packet.NewTransferPacketHandler(inputTransfer, outputTransfer)
+	packetHandlers.Append(transferHandler)
+	//注入逻辑处理函数
+	if api.BusinessLogicFn == nil {
+		logicFuncName := fmt.Sprint("%s%s", ApiLogicFuncNamePrefix, api.ApiName)
+		if api.ContextApiFunc == nil {
+			err = errors.Errorf("api.ContextApiFunc required")
+			return err
+		}
+		packetHandlers.Append(NewApiLogicFuncPacketHandler(logicFuncName, *api.ContextApiFunc))
+	}
+
+	api.PacketHandlers = packetHandlers
+
+	return
+}
+
+func (api Api) Run(ctx context.Context, input []byte) (out []byte, err error) {
+	packetHandlers, err := api.PacketHandlers.GetByName(api.Flow...)
+	if err != nil {
+		return nil, err
+	}
+	s := stream.NewStream(api.ApiName, nil, packetHandlers...)
+	out, err = s.Run(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // 对提取变量有意义，注释暂时保留，另外可以通过注释关联资源，避免关联信息分散，增强关联性，方便维护
@@ -182,6 +247,8 @@ var ERROR_COMPILED_API = errors.New("compiled api error")
 const (
 	PACKETHANDLER_NAME_API_LOGIC = "api_logic"
 )
+
+var ApiLogicFuncNamePrefix = "script.ApiLogic" //api 逻辑函数名前缀
 
 func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 	defer func() {
@@ -235,25 +302,18 @@ func NewApiCompiled(setting *Setting) (capi *apiCompiled, err error) {
 		return capi.ExecSQLTPL(ctx, tplName, input)
 	}
 	injectObject.PathTransfers = setting.Torms.Transfers()
-	//注入逻辑处理函数
-	if setting.BusinessLogicFn != nil {
-		packetHandler.Append(packet.NewFuncPacketHandler(PACKETHANDLER_NAME_API_LOGIC, func(ctx context.Context, input []byte) (newCtx context.Context, out []byte, err error) {
-			out, err = setting.BusinessLogicFn(ctx, injectObject, input)
-			return ctx, out, err
-		}, nil))
-	}
+
 	capi._api.Flow.DropEmpty()
-	packetHandlers, err := packetHandler.GetByName(capi._api.Flow...)
-	if err != nil {
-		return nil, err
-	}
-	capi._api._apiStream = stream.NewStream(capi._api.ApiName, nil, packetHandlers...)
+
 	project := setting.Project
 	capi._api._Project = project
 	for language, scripts := range project.Scripts.GroupByLanguage() {
-		engine, err := goscript.NewScriptEngine(language)
-		if err != nil {
-			return nil, err
+		engine, err := setting.Project.ScriptEngines.GetByLanguage(language) // 优先使用项目配置
+		if errors.Is(err, goscript.ERROR_NOT_FOUND_SCRIPTI_BY_LANGUAGE) {
+			engine, err = goscript.NewScriptEngine(language)
+			if err != nil {
+				return nil, err
+			}
 		}
 		for _, script := range scripts {
 			engine.WriteCode(script.Code)

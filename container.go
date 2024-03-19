@@ -92,7 +92,7 @@ func (c *Container) setLogger(fn func(logInfo logchan.LogInforInterface, typeNam
 }
 
 // RegisterAPIByModel 通过模型注册路由
-func (c *Container) RegisterAPIByModel(scriptLanguage string, transferFuncModels TransferFuncModels, apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
+func (c *Container) RegisterAPIByModel(scriptLanguage string, scriptEngines goscript.ScriptIs, transferFuncModels TransferFuncModels, apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
 
 	sources := make(torm.Sources, 0)
 	for _, sourceModel := range sourceModels {
@@ -147,7 +147,7 @@ func (c *Container) RegisterAPIByModel(scriptLanguage string, transferFuncModels
 		if err != nil {
 			return err
 		}
-		setting.BusinessLogicFn = logicFn
+		setting.Api.BusinessLogicFn = logicFn
 		capi, err := NewApiCompiled(setting)
 		if err != nil {
 			return err
@@ -228,12 +228,14 @@ func (c *Container) RegisterRouteFn(routeFn func(method string, path string)) {
 
 // ApiHandlerRunTormFn 内置运行单个Torm业务逻辑函数
 func ApiHandlerRunTormFn(tors ...torm.Torm) (logicHandler DynamicLogicFn) {
-	logicHandler = func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error) {
+	logicHandler = func(contextApiFunc ContextApiFunc, input []byte) (out []byte, err error) {
 		outputArr := make([][]byte, len(tors))
 		for i, tor := range tors {
 			switch strings.ToUpper(tor.Source.Type) {
 			case torm.SOURCE_TYPE_SQL:
-				outputArr[i], err = injectObject.ExecSQLTPL(ctx, tor.Name, input)
+				ctx := context.Background()
+
+				outputArr[i], err = tor.Run(ctx, input)
 				if err != nil {
 					return nil, err
 				}
@@ -256,7 +258,7 @@ func ApiHandlerRunTormFn(tors ...torm.Torm) (logicHandler DynamicLogicFn) {
 
 // ApiHandlerEmptyFn 内置空业务逻辑函数，使用mock数据
 func ApiHandlerEmptyFn() (logicHandler DynamicLogicFn) {
-	logicHandler = func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error) {
+	logicHandler = func(contextApiFunc ContextApiFunc, input []byte) (out []byte, err error) {
 		return out, nil
 	}
 	return logicHandler
