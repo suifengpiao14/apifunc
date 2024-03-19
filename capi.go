@@ -51,6 +51,7 @@ type ExecSouceFn func(ctx context.Context, identify string, input []byte) (out [
 type InjectObject struct {
 	ExecSQLTPL    ExecSouceFn
 	PathTransfers pathtransfer.Transfers
+	Api           Api
 }
 
 func (injectObject InjectObject) ConvertInput(namespace string, input []byte) (out []byte) {
@@ -73,6 +74,35 @@ func (injectObject InjectObject) ConvertOutput(namespace string, data []byte) (o
 	outStr := gjson.GetBytes(data, gjsonpath).String()
 	out = []byte(outStr)
 	return out
+}
+
+func (injectObject InjectObject) TransferByFunc(funcname string, input []byte) (out []byte, err error) {
+	scriptEngine, err := injectObject.Api._ScriptEngines.GetByLanguage(injectObject.Api._Project.CurrentLanguage)
+	if err != nil {
+		return nil, err
+	}
+	out, err = TransferByFunc(injectObject.Api._Project.FuncTransfers, scriptEngine, funcname, input)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func TransferByFunc(funcTransfers pathtransfer.Transfers, scriptEngine goscript.ScriptI, funcname string, input []byte) (out []byte, err error) {
+	funcTransfers = funcTransfers.GetByNamespace(pathtransfer.JoinPath(pathtransfer.Transfer_Top_Namespace_Func, funcname))
+	funcInTransfers, funcOutTransfers := funcTransfers.SplitInOut()
+	funcInput := gjson.GetBytes(input, funcInTransfers.Reverse().GjsonPath()).String()
+	callScript := scriptEngine.CallFuncScript(funcname, funcInput)
+	funcReturn, err := scriptEngine.Run(callScript)
+	if err != nil {
+		return nil, err
+	}
+	funcOut := gjson.Get(funcReturn, funcOutTransfers.GjsonPath()).String()
+	out, err = jsonpatch.MergePatch(input, []byte(funcOut))
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 type DynamicLogicFn func(ctx context.Context, injectObject InjectObject, input []byte) (out []byte, err error)
@@ -107,9 +137,6 @@ type Api struct {
 	_ScriptEngines      goscript.ScriptIs
 	_Project            Project
 }
-
-// api默认流程
-var Api_Flow_Default = []string{}
 
 func (s Api) GetRoute() (mehtod string, path string) {
 	return s.Method, s.Route
@@ -269,24 +296,14 @@ func (capi *apiCompiled) ExecSQLTPL(ctx context.Context, tplName string, input [
 		return nil, err
 	}
 	if funcName != "" {
-		funcTransfers := capi._api._Project.FuncTransfers.GetByNamespace(pathtransfer.JoinPath(pathtransfer.Transfer_Top_Namespace_Func, funcName))
-		funcInTransfers, funcOutTransfers := funcTransfers.SplitInOut()
-		funcInput := gjson.GetBytes(input, funcInTransfers.Reverse().GjsonPath()).String()
 		scriptEngine, err := capi._api._ScriptEngines.GetByLanguage(capi._api._Project.CurrentLanguage)
 		if err != nil {
 			return nil, err
 		}
-		callScript := scriptEngine.CallFuncScript(funcName, funcInput)
-		funcReturn, err := scriptEngine.Run(callScript)
+		input, err = TransferByFunc(capi._api._Project.FuncTransfers, scriptEngine, funcName, input) // 通过动态脚本修改入参
 		if err != nil {
 			return nil, err
 		}
-		funcOut := gjson.Get(funcReturn, funcOutTransfers.GjsonPath()).String()
-		newInput, err := jsonpatch.MergePatch(input, []byte(funcOut))
-		if err != nil {
-			return nil, err
-		}
-		input = newInput // 通过动态脚本修改入参
 	}
 
 	allPacketHandlers := make(packethandler.PacketHandlers, 0)
