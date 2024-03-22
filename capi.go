@@ -107,7 +107,7 @@ func (api Api) Key() string {
 	return apiKey(api.Route, api.Method)
 }
 
-//EqualFold 判断2个api是否相同（名称或者路由和方法一致，则判断为相同）
+// EqualFold 判断2个api是否相同（名称或者路由和方法一致，则判断为相同）
 func (api Api) EqualFold(api1 Api) (ok bool) {
 	return strings.EqualFold(api.ApiName, api1.ApiName) || strings.EqualFold(api.Key(), api1.Key())
 }
@@ -116,7 +116,7 @@ func apiKey(route string, method string) string {
 	return fmt.Sprintf("%s_%s", strings.ToLower(route), strings.ToLower(method))
 }
 
-//Merge 和并2个api属性（有时基于代码本身会先注册logic 函数，再加载其它配置，此时需要合并属性，和并的2个api要么名称相同，要么 route和method相同）
+// Merge 和并2个api属性（有时基于代码本身会先注册logic 函数，再加载其它配置，此时需要合并属性，和并的2个api要么名称相同，要么 route和method相同）
 func (api *Api) Merge(mergedApi Api) (err error) {
 	if !api.EqualFold(mergedApi) {
 		err = errors.Errorf("the two APIs used for merging must have the same name or key,want:%s|%s,got:%s|%s",
@@ -239,10 +239,10 @@ func (api *Api) InitPacketHandler() (err error) {
 	namespaceOutput := fmt.Sprintf("%s%s", api.ApiName, pathtransfer.Transfer_Direction_output) // 去除命名空间
 	inputPathTransfers, outputPathTransfers := api.PathTransfers.SplitInOut()
 	inputTransfer := inputPathTransfers.ModifySrcPath(func(path pathtransfer.Path) (newPath pathtransfer.Path) {
-		return pathtransfer.TrimNamespace(path, namespaceInput)
+		return path.TrimNamespace(namespaceInput)
 	}).GjsonPath()
 	outputTransfer := outputPathTransfers.ModifySrcPath(func(path pathtransfer.Path) (newPath pathtransfer.Path) {
-		return pathtransfer.TrimNamespace(path, namespaceOutput)
+		return path.TrimNamespace(namespaceOutput)
 	}).Reverse().GjsonPath()
 
 	//转换为代码中期望的数据格式
@@ -291,11 +291,12 @@ func (api Api) Run(ctx context.Context, input []byte) (out []byte, err error) {
 // 	return variables
 // }
 
-/* type apiCompiled struct {
-	_api       Api
-	_container *Container
-	_Torms     torm.Torms
-}
+/*
+	 type apiCompiled struct {
+		_api       Api
+		_container *Container
+		_Torms     torm.Torms
+	}
 */
 var ERROR_COMPILED_API = errors.New("compiled api error")
 

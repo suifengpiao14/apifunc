@@ -64,7 +64,7 @@ func (packet *_ApiFlowFuncPacketHandler) Before(ctx context.Context, input []byt
 }
 func (packet *_ApiFlowFuncPacketHandler) After(ctx context.Context, input []byte) (newCtx context.Context, out []byte, err error) {
 	err = packethandler.ERROR_EMPTY_FUNC
-	return newCtx, out, err
+	return newCtx, input, err
 }
 
 func (packet *_ApiFlowFuncPacketHandler) String() string {

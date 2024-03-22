@@ -14,6 +14,7 @@ func Pagination(ctx context.Context, totalTorm torm.Torm, listTorm torm.Torm, in
 	if err != nil {
 		return nil, err
 	}
+
 	//"{\"Dictionary\":{\"pagination\":{\"total\":29}}}"
 	totalPath := "Dictionary.pagination.total"
 	total := cast.ToInt(gjson.GetBytes(totalJson, totalPath).String())
