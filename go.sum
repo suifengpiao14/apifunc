@@ -440,10 +440,10 @@ github.com/suifengpiao14/sqlplus v0.0.19 h1:g/zn27mrm1VzmRdbvuRcVdY1PYnY6f+tSJqk
 github.com/suifengpiao14/sqlplus v0.0.19/go.mod h1:gujOOwpU3GwJjgoOHbiwE5JpOrg7lrp59hsUvAdDd/g=
 github.com/suifengpiao14/sshmysql v0.0.5 h1:hEoatYhUf9nCIsvm6wn7Nwr4PgE8LyUlY41SMOrTwbU=
 github.com/suifengpiao14/sshmysql v0.0.5/go.mod h1:YvD7LCCDjrK/zr1YkiCGZK5ETDevY9NKsQkJ2XDRb5Y=
-github.com/suifengpiao14/stream v0.0.66 h1:rVCJDQzZdzeQg/9hxgX/+esDw/bz8ojK4PRIAM/ws4M=
-github.com/suifengpiao14/stream v0.0.66/go.mod h1:EvVuBVHcj3hGP0V/c5h5284UukBMjnmjTPRNZPnFSGs=
-github.com/suifengpiao14/torm v0.0.35 h1:5f24zdzyOnx6pITuAicxZHWG2YdcLVr6jTbb/qWUenI=
-github.com/suifengpiao14/torm v0.0.35/go.mod h1:eCWDRmRMq2hmEnlNjCVtyjqT1LfP0rIJatWFa6pmKxU=
+github.com/suifengpiao14/stream v0.0.67 h1:zyrOiBRi9oZRBTq+jBV2Ko89mr6KMX+qWv168rmFtB8=
+github.com/suifengpiao14/stream v0.0.67/go.mod h1:QYkKCmqhsZFIxMxrJZc+II1oSAsW5CtYuFvAD3B9+AE=
+github.com/suifengpiao14/torm v0.0.37 h1:+hs4AZjJse05aA8K3LrhWZEig4YrRa6YxGDzU5r6/Ts=
+github.com/suifengpiao14/torm v0.0.37/go.mod h1:+AZYux3qSuRNV4zpvuuRL6c8o9gXUSKZtETWXg2vcCM=
 github.com/syndtr/goleveldb v0.0.0-20180815032940-ae2bd5eed72d/go.mod h1:Z4AUp2Km+PwemOoO/VB5AOx9XSsIItzFjoJlOSiYmn0=
 github.com/syyongx/php2go v0.9.8 h1:FNwV1y+RaZxl7KTm/ICh0Zrhca/70d5JRMpwByuQ1FM=
 github.com/syyongx/php2go v0.9.8/go.mod h1:meN2eIhhUoxOd2nMxbpe8g6cFPXI5O9/UAAuz7oDdzw=
