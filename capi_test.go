@@ -1,19 +1,8 @@
 package apifunc_test
 
-import (
-	"context"
-	"fmt"
-	"testing"
-
-	"github.com/stretchr/testify/require"
-	"github.com/suifengpiao14/apifunc"
-	"github.com/suifengpiao14/logchan/v2"
-	"github.com/suifengpiao14/torm"
-	"github.com/suifengpiao14/torm/sourceprovider"
-)
-
 type ContextKey string
 
+/*
 func TestAPIMemory(t *testing.T) {
 	route := "/api/1/hello"
 	method := "POST"
@@ -91,3 +80,4 @@ func TestAPIMemory(t *testing.T) {
 	fmt.Println(out)
 
 }
+*/

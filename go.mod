@@ -7,9 +7,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
 	github.com/suifengpiao14/glob v0.0.4
-	github.com/suifengpiao14/goscript v0.0.2
+	github.com/suifengpiao14/goscript v0.0.4
 	github.com/suifengpiao14/logchan/v2 v2.0.24
-	github.com/suifengpiao14/packethandler v0.0.4
+	github.com/suifengpiao14/packethandler v0.0.5
 	github.com/suifengpiao14/pathtransfer v0.0.9
 	github.com/suifengpiao14/sqlexec v0.0.31
 	github.com/suifengpiao14/sshmysql v0.0.5

@@ -2,7 +2,6 @@ package apifunc
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -10,80 +9,88 @@ import (
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/goscript"
 	"github.com/suifengpiao14/logchan/v2"
-	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/pathtransfer"
+	"github.com/suifengpiao14/stream/packet"
 	"github.com/suifengpiao14/torm"
 )
 
 // 容器，包含所有预备的资源、脚本等
 type Container struct {
-	apis              map[string]*apiCompiled
-	dynamicLogicFnMap map[string]DynamicLogicFn
-	lockCApi          sync.Mutex
+	apis     Apis
+	project  Project
+	torms    torm.Torms
+	compiled sync.Once
 }
 
 func NewContainer(logFn func(logInfo logchan.LogInforInterface, typeName logchan.LogName, err error)) (container *Container) {
 	container = &Container{
-		apis:              map[string]*apiCompiled{},
-		lockCApi:          sync.Mutex{},
-		dynamicLogicFnMap: map[string]DynamicLogicFn{},
+		apis:  make(Apis, 0),
+		torms: make(torm.Torms, 0),
 	}
 	container.setLogger(logFn) // 外部注入日志处理组件
 	return container
 }
 
-func (c *Container) RegisterAPI(capi *apiCompiled) {
-	c.lockCApi.Lock()
-	defer c.lockCApi.Unlock()
-	methods := make([]string, 0)
-	if capi._api.Method != "" {
-		methods = strings.Split(capi._api.Method, ",")
-	}
-	capi._container = c // 关联容器
-	for _, method := range methods {
-		key := apiMapKey(capi._api.Route, method)
-		c.apis[key] = capi
-	}
+func (c *Container) RegisterAPI(api Api) {
+	c.apis.AddMerge(api)
 }
 
-// RegisterAPIHandler 业务逻辑处理函数需要提前注册，方便编译时从这里取
-func (c *Container) RegisterAPIHandler(method string, route string, logicHandler DynamicLogicFn) {
-	c.lockCApi.Lock()
-	defer c.lockCApi.Unlock()
-	key := apiMapKey(route, method)
-	c.dynamicLogicFnMap[key] = logicHandler
-}
-
-var ERROR_NOT_FOUND_DYNAMIC_LOGICFN_FUNC = errors.New("not found dynamic logic func")
-
-func (c *Container) GetDynamicLogicFn(route string, method string) (logicHandler DynamicLogicFn, err error) {
-	key := apiMapKey(route, method)
-	logicHandler, ok := c.dynamicLogicFnMap[key]
-	if !ok {
-		err = errors.WithMessagef(ERROR_NOT_FOUND_DYNAMIC_LOGICFN_FUNC, "route:%s,method:%s", route, method)
-		return nil, err
+//Compile 只会执行一次
+func (c *Container) Compile() (err error) {
+	c.compiled.Do(func() {
+		//初始化api
+		for i := range c.apis {
+			err = c.apis[i].Init()
+			if err != nil {
+				return
+			}
+		}
+		//初始化torm
+		for i, tor := range c.torms {
+			switch strings.ToUpper(tor.Source.Type) {
+			case torm.SOURCE_TYPE_SQL:
+				c.torms[i].PacketHandlers, err = packet.TormSQLPacketHandler(tor)
+				if err != nil {
+					return
+				}
+			}
+		}
+		//初始化project
+		err = c.project.Init()
+		if err != nil {
+			return
+		}
+	})
+	if err != nil {
+		return err
 	}
-	return logicHandler, nil
+	return nil
 }
 
-// 计算api map key
-func apiMapKey(route, method string) (key string) {
-	key = strings.ToLower(fmt.Sprintf("%s_%s", route, method))
-	return key
+// RegisterAPIBusinessFlow 业务流程处理函数需要提前注册，方便编译时从这里取
+func (c *Container) RegisterAPIBusinessFlow(method string, route string, logicHandler BusinessFlowFn) {
+	api := Api{
+		Method:         method,
+		Route:          route,
+		BusinessFlowFn: logicHandler,
+	}
+	c.apis.AddMerge(api)
 }
 
 var ERROR_NOT_FOUND_API = errors.New("not found api")
 
-func (c *Container) GetCApi(route string, method string) (capi *apiCompiled, err error) {
-	key := apiMapKey(route, method)
-	capi, ok := c.apis[key]
-	if !ok {
-		err = errors.WithMessagef(ERROR_NOT_FOUND_API, "route:%s,method:%s", route, method)
-		if err != nil {
-			return nil, err
-		}
+//GetContextApiFunc  根据route，method获取特定api执行上下文
+func (c *Container) GetContextApiFunc(route string, method string) (contextApiFunc *ContextApiFunc, err error) {
+	api, err := c.apis.GetByRoute(route, method)
+	if err != nil {
+		return nil, err
 	}
-	return capi, nil
+	contextApiFunc = &ContextApiFunc{
+		_Api:     *api,
+		_Torms:   c.torms,
+		_Project: c.project,
+	}
+	return contextApiFunc, nil
 }
 
 // SsetLogger 封装相关性——全局设置 功能
@@ -91,17 +98,8 @@ func (c *Container) setLogger(fn func(logInfo logchan.LogInforInterface, typeNam
 	logchan.SetLoggerWriter(fn)
 }
 
-// RegisterAPIByModel 通过模型注册路由
-func (c *Container) RegisterAPIByModel(scriptLanguage string, scriptEngines goscript.ScriptIs, transferFuncModels TransferFuncModels, apiModels ApiModels, sourceModels SourceModels, tormModels TormModels) (err error) {
-
-	sources := make(torm.Sources, 0)
-	for _, sourceModel := range sourceModels {
-		source, err := torm.MakeSource(sourceModel.SourceID, sourceModel.SourceType, sourceModel.Config, sourceModel.SSHConfig, sourceModel.DDL)
-		if err != nil {
-			return err
-		}
-		sources = append(sources, source)
-	}
+//RegisterProject 注册项目
+func (c *Container) RegisterProject(scriptLanguage string, scriptEngines goscript.ScriptIs, transferFuncModels TransferFuncModels) {
 	project := Project{
 		CurrentLanguage: scriptLanguage,
 		FuncTransfers:   make(pathtransfer.Transfers, 0),
@@ -117,118 +115,51 @@ func (c *Container) RegisterAPIByModel(scriptLanguage string, scriptEngines gosc
 		}
 		project.FuncTransfers.AddReplace(transferFuncModel.TransferLine.Transfer()...)
 	}
+	c.project = project
+}
 
-	for _, apiModel := range apiModels {
-		setting, err := makeSetting(project, apiModel, sources, tormModels)
-		if err != nil {
-			return err
-		}
-		logicFn, err := c.GetDynamicLogicFn(apiModel.Route, apiModel.Method)
-		if errors.Is(err, ERROR_NOT_FOUND_DYNAMIC_LOGICFN_FUNC) {
-			err = nil
-			logicFn = ApiHandlerEmptyFn() // 所有的都以empty 做保底逻辑
-			tormDependents := setting.Api.Dependents.FilterByType(Dependent_Type_Torm)
-			tors := make([]torm.Torm, 0)
-			for _, dependent := range tormDependents {
-				if dependent.Fullname == "" {
-					continue
-				}
-				tor, err := setting.Torms.GetByName(dependent.Fullname)
-				if err != nil {
-					return err
-				}
-				tors = append(tors, *tor)
-			}
-			if len(tors) > 0 {
-				logicFn = ApiHandlerRunTormFn(tors...)
-			}
-
-		}
-		if err != nil {
-			return err
-		}
-		setting.Api.BusinessLogicFn = logicFn
-		capi, err := NewApiCompiled(setting)
-		if err != nil {
-			return err
-		}
-		c.RegisterAPI(capi)
+//RegisterTorms 注册torm
+func (c *Container) RegisterTormByModels(tormModels TormModels, sourceModels SourceModels) (err error) {
+	if c.torms == nil {
+		c.torms = make(torm.Torms, 0)
 	}
+	sources := make(torm.Sources, 0)
+	for _, sourceModel := range sourceModels {
+		source, err := torm.MakeSource(sourceModel.SourceID, sourceModel.SourceType, sourceModel.Config, sourceModel.SSHConfig, sourceModel.DDL)
+		if err != nil {
+			return err
+		}
+		sources = append(sources, source)
+	}
+	torms, err := tormModels.Torms(sources)
+	if err != nil {
+		return err
+	}
+	c.torms.AddReplace(torms...)
 	return nil
 }
 
-func makeSetting(project Project, apiModel ApiModel, sources torm.Sources, tormModels TormModels) (setting *Setting, err error) {
-	flows := packethandler.Flow(strings.Split(strings.TrimSpace(apiModel.Flow), ","))
-	flows.DropEmpty()
-	if len(flows) == 0 {
-		flows = DefaultAPIFlows
+// RegisterAPIByModel 通过模型注册路由
+func (c *Container) RegisterAPIByModel(apiModels ...ApiModel) {
+	if c.apis == nil {
+		c.apis = make(Apis, 0)
 	}
-
-	transfers := apiModel.PathTransferLine.Transfer()
-	inTransfers, outTransfers := transfers.GetByNamespace(apiModel.ApiId).SplitInOut()
-	setting = &Setting{
-		Api: Api{
-			ApiName:             apiModel.ApiId,
-			Method:              strings.TrimSpace(apiModel.Method),
-			Route:               strings.TrimSpace(apiModel.Route),
-			RequestLineschema:   strings.TrimSpace(apiModel.InputSchema),
-			ResponseLineschema:  strings.TrimSpace(apiModel.OutputSchema),
-			InputPathTransfers:  inTransfers,
-			OutputPathTransfers: outTransfers,
-			Flow:                flows,
-		},
-		Project: project,
-
-		Torms: make(torm.Torms, 0),
+	for _, apiModel := range apiModels {
+		api := apiModel.Api()
+		c.apis.AddMerge(api)
 	}
-
-	dependents, err := apiModel.Dependents.Dependents()
-	if err != nil {
-		return nil, err
-	}
-	setting.Api.Dependents = dependents
-	tormNames := dependents.FilterByType("torm").Fullnames()
-	subTormModel := tormModels.GetByName(tormNames...)
-	groupdTormModels := subTormModel.GroupBySourceId()
-	for sourceId, tormModels := range groupdTormModels {
-		source, err := sources.GetByIdentifer(sourceId)
-		if err != nil {
-			return nil, err
-		}
-		tplStr := tormModels.GetTpl()
-		for _, tormModel := range tormModels {
-			flows := packethandler.Flow(strings.Split(strings.TrimSpace(tormModel.Flow), ","))
-			flows.DropEmpty()
-			if len(flows) == 0 {
-				flows = DefaultTormFlows
-			}
-			torms, err := torm.ParserTpl(source, tplStr)
-			if err != nil {
-				return nil, err
-			}
-			// 只处理当前torm
-			tor, err := torms.GetByName(tormModel.TemplateID)
-			if err != nil {
-				return nil, err
-			}
-			tor.Flow = flows
-			tor.Transfers = tormModel.TransferLine.Transfer()
-			setting.Torms.AddReplace(*tor)
-		}
-	}
-	return setting, nil
 }
 
 // RegisterRouteFn 给router 注册路由
 func (c *Container) RegisterRouteFn(routeFn func(method string, path string)) {
 	for _, api := range c.apis {
-		routeFn(api._api.Method, api._api.Route)
+		routeFn(api.Method, api.Route)
 	}
 }
 
 // ApiHandlerRunTormFn 内置运行单个Torm业务逻辑函数
-func ApiHandlerRunTormFn(tors ...torm.Torm) (logicHandler DynamicLogicFn) {
-	logicHandler = func(contextApiFunc ContextApiFunc, input []byte) (out []byte, err error) {
+func ApiHandlerRunTormFn(tors ...torm.Torm) (logicHandler BusinessFlowFn) {
+	logicHandler = func(ctx *ContextApiFunc, input []byte) (out []byte, err error) {
 		outputArr := make([][]byte, len(tors))
 		for i, tor := range tors {
 			switch strings.ToUpper(tor.Source.Type) {
@@ -257,8 +188,8 @@ func ApiHandlerRunTormFn(tors ...torm.Torm) (logicHandler DynamicLogicFn) {
 }
 
 // ApiHandlerEmptyFn 内置空业务逻辑函数，使用mock数据
-func ApiHandlerEmptyFn() (logicHandler DynamicLogicFn) {
-	logicHandler = func(contextApiFunc ContextApiFunc, input []byte) (out []byte, err error) {
+func ApiHandlerEmptyFn() (logicHandler BusinessFlowFn) {
+	logicHandler = func(ctx *ContextApiFunc, input []byte) (out []byte, err error) {
 		return out, nil
 	}
 	return logicHandler

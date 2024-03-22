@@ -6,9 +6,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/pathtransfer"
 	"github.com/suifengpiao14/sqlexec"
 	"github.com/suifengpiao14/sshmysql"
+	"github.com/suifengpiao14/torm"
 )
 
 type DependentJson string
@@ -85,7 +87,34 @@ type ApiModel struct {
 	Flow             string                    `json:"flow"`
 }
 
+//Api 转为API
+func (apiModel ApiModel) Api() (api Api) {
+	flows := packethandler.Flow(strings.Split(strings.TrimSpace(apiModel.Flow), ","))
+	flows.DropEmpty()
+	if len(flows) == 0 {
+		flows = DefaultAPIFlows
+	}
+	api = Api{
+		ApiName:            apiModel.ApiId,
+		Method:             strings.TrimSpace(apiModel.Method),
+		Route:              strings.TrimSpace(apiModel.Route),
+		RequestLineschema:  strings.TrimSpace(apiModel.InputSchema),
+		ResponseLineschema: strings.TrimSpace(apiModel.OutputSchema),
+		PathTransfers:      apiModel.PathTransferLine.Transfer(),
+		Flow:               flows,
+	}
+	return api
+}
+
 type ApiModels []ApiModel
+
+func (apiModels ApiModels) Api() (apis []Api) {
+	apis = make([]Api, 0)
+	for _, apiModel := range apiModels {
+		apis = append(apis, apiModel.Api())
+	}
+	return apis
+}
 
 type TransferFuncModel struct {
 	Language     string                    `xml:"language"`
@@ -104,11 +133,6 @@ type SourceModel struct {
 	DDL        string `json:"ddl"` //SQL 类型，需要使用cudevent 库时需要配置DDL
 }
 
-const (
-	Source_Type_SQL  = "SQL"
-	Source_Type_CURL = "CURL"
-)
-
 type SourceModels []SourceModel
 
 //FillDDL 填充DDL
@@ -118,7 +142,7 @@ func (ss *SourceModels) FillDDL() (err error) {
 			continue
 		}
 		switch strings.ToUpper(sourceModel.SourceType) {
-		case Source_Type_SQL:
+		case torm.SOURCE_TYPE_SQL:
 			c, err := sqlexec.JsonToDBConfig(sourceModel.Config)
 			if err != nil {
 				err = errors.WithMessagef(err, "sourceType:%s,config:%s", sourceModel.SourceType, sourceModel.Config)
@@ -204,4 +228,35 @@ func (tModels TormModels) GetTransferLine() (transferLine pathtransfer.TransferL
 	}
 	transferLine = pathtransfer.TransferLine(w.String())
 	return transferLine
+}
+
+func (tModels TormModels) Torms(sources torm.Sources) (torms torm.Torms, err error) {
+	torms = make(torm.Torms, 0)
+	groupdTormModels := tModels.GroupBySourceId()
+	for sourceId, tormModels := range groupdTormModels {
+		source, err := sources.GetByIdentifer(sourceId)
+		if err != nil {
+			return nil, err
+		}
+		tplStr := tormModels.GetTpl()
+		baseTorms, err := torm.ParserTpl(source, tplStr)
+		if err != nil {
+			return nil, err
+		}
+		for _, tormModel := range tormModels {
+			flows := packethandler.Flow(strings.Split(strings.TrimSpace(tormModel.Flow), ","))
+			flows.DropEmpty()
+			if len(flows) == 0 {
+				flows = DefaultTormFlows
+			}
+			tor, err := baseTorms.GetByTplName(tormModel.TemplateID)
+			if err != nil {
+				return nil, err
+			}
+			tor.Flow = flows
+			tor.Transfers = tormModel.TransferLine.Transfer()
+			torms.AddReplace(*tor)
+		}
+	}
+	return torms, nil
 }
