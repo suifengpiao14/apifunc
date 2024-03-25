@@ -21,7 +21,7 @@ var DefaultAPIFlows = packethandler.Flow{
 	lineschemapacket.PACKETHANDLER_NAME_MergeDefaultPacketHandler,
 	lineschemapacket.PACKETHANDLER_NAME_TransferTypeFormatPacket,
 	packet.PACKETHANDLER_NAME_TransferPacketHandler,
-	packet.PACKETHANDLER_NAME_JsonMergeInputPacket,
+	packet.PACKETHANDLER_NAME_JsonMergeInputToOutputPacket,
 	PACKETHANDLER_NAME_API_FLOW,
 }
 

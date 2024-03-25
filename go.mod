@@ -11,11 +11,11 @@ require (
 	github.com/suifengpiao14/goscript v0.0.4
 	github.com/suifengpiao14/logchan/v2 v2.0.24
 	github.com/suifengpiao14/packethandler v0.0.5
-	github.com/suifengpiao14/pathtransfer v0.0.12
+	github.com/suifengpiao14/pathtransfer v0.0.13
 	github.com/suifengpiao14/sqlexec v0.0.31
 	github.com/suifengpiao14/sshmysql v0.0.5
-	github.com/suifengpiao14/stream v0.0.67
-	github.com/suifengpiao14/torm v0.0.37
+	github.com/suifengpiao14/stream v0.0.68
+	github.com/suifengpiao14/torm v0.0.38
 	github.com/tidwall/gjson v1.17.1
 	github.com/tidwall/sjson v1.2.5
 )
@@ -36,7 +36,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible // indirect
 	github.com/go-playground/validator/v10 v10.15.1 // indirect
-	github.com/go-resty/resty/v2 v2.10.0 // indirect
+	github.com/go-resty/resty/v2 v2.11.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
@@ -68,11 +68,11 @@ require (
 	github.com/suifengpiao14/ddl-executor v0.0.4 // indirect
 	github.com/suifengpiao14/funcs v0.0.18 // indirect
 	github.com/suifengpiao14/gjsonmodifier v0.2.2 // indirect
-	github.com/suifengpiao14/httpraw v0.0.6 // indirect
+	github.com/suifengpiao14/httpraw v0.0.7 // indirect
 	github.com/suifengpiao14/kvstruct v0.0.14 // indirect
 	github.com/suifengpiao14/lineschema v0.0.36 // indirect
-	github.com/suifengpiao14/sdkgolib v0.0.22 // indirect
-	github.com/suifengpiao14/sqlplus v0.0.19 // indirect
+	github.com/suifengpiao14/sdkgolib v0.0.23 // indirect
+	github.com/suifengpiao14/sqlplus v0.0.20 // indirect
 	github.com/syyongx/php2go v0.9.8 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect

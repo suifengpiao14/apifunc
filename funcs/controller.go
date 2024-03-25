@@ -6,7 +6,6 @@ import (
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/spf13/cast"
 	"github.com/suifengpiao14/torm"
-	"github.com/tidwall/gjson"
 )
 
 func Pagination(ctx context.Context, totalTorm torm.Torm, listTorm torm.Torm, input []byte) (out []byte, err error) {
@@ -14,10 +13,11 @@ func Pagination(ctx context.Context, totalTorm torm.Torm, listTorm torm.Torm, in
 	if err != nil {
 		return nil, err
 	}
-
-	//"{\"Dictionary\":{\"pagination\":{\"total\":29}}}"
-	totalPath := "Dictionary.pagination.total"
-	total := cast.ToInt(gjson.GetBytes(totalJson, totalPath).String())
+	totalStr, err := totalTorm.TrimOutNamespace(totalJson)
+	if err != nil {
+		return nil, err
+	}
+	total := cast.ToInt(totalStr)
 	if total == 0 {
 		return nil, nil
 	}
