@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/torm"
 )
 
@@ -14,7 +15,7 @@ type ContextApiFunc struct {
 	_Project Project
 }
 
-//ConvertContext2ContextApiFunc 从ctx 中获取 ContextApiFunc上下文
+// ConvertContext2ContextApiFunc 从ctx 中获取 ContextApiFunc上下文
 func ConvertContext2ContextApiFunc(ctx context.Context) (contextApiFunc *ContextApiFunc, err error) {
 
 	contextApiFunc, ok := ctx.(*ContextApiFunc)
@@ -50,7 +51,7 @@ func (*ContextApiFunc) Value(key any) any {
 	return nil
 }
 
-//RunApiFunc 执行ApiFunc 之所有不写成  func  (cApiFunc ContextApiFunc)Run(input []byte) (out []byte, err error) 是因为ContextApiFunc 作为数据传入到脚本中，为脚本提供上下文资源，在脚本中不能调用Run方法
+// RunApiFunc 执行ApiFunc 之所有不写成  func  (cApiFunc ContextApiFunc)Run(input []byte) (out []byte, err error) 是因为ContextApiFunc 作为数据传入到脚本中，为脚本提供上下文资源，在脚本中不能调用Run方法
 func RunApiFunc(ctxApiFunc *ContextApiFunc, input []byte) (out []byte, err error) {
 	out, err = ctxApiFunc._Api.Run(ctxApiFunc, input)
 	if err != nil && ctxApiFunc._Api.ErrorHandler != nil {
@@ -87,6 +88,18 @@ func (ctxApiFunc *ContextApiFunc) RunTorm(tormName string, input []byte) (out []
 		return nil, err
 	}
 	return out, nil
+}
+
+func (ctxApiFunc *ContextApiFunc) SetApiFlow(flow packethandler.Flow) {
+	ctxApiFunc._Api.Flow = flow
+}
+
+func (ctxApiFunc *ContextApiFunc) SetPackethandlers(packethandlers packethandler.PacketHandlers) {
+	ctxApiFunc._Api.PacketHandlers = packethandlers
+}
+
+func (ctxApiFunc *ContextApiFunc) GetPackethandlers() (packethandlers packethandler.PacketHandlers) {
+	return ctxApiFunc._Api.PacketHandlers
 }
 
 func (ctxApiFunc *ContextApiFunc) Torms() (torms torm.Torms) {
