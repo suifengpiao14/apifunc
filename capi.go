@@ -91,16 +91,17 @@ func (pro *Project) Init() (err error) {
 }
 
 type Api struct {
-	ApiName            string                 `json:"apiName"`
-	Route              string                 `json:"route"`
-	Method             string                 `json:"method"`
-	Flow               packethandler.Flow     `json:"flow"` // 按顺序组装执行流程
-	businessFlowFn     BusinessFlowFn         // 业务处理流程函数
-	RequestLineschema  string                 `json:"requestLineschema"`
-	ResponseLineschema string                 `json:"responseLineschema"`
-	PathTransfers      pathtransfer.Transfers `json:"pathTransfers"`
-	ErrorHandler       stream.ErrorHandler
-	PacketHandlers     packethandler.PacketHandlers
+	ApiName             string                 `json:"apiName"`
+	Route               string                 `json:"route"`
+	Method              string                 `json:"method"`
+	Flow                packethandler.Flow     `json:"flow"` // 按顺序组装执行流程
+	businessFlowFn      BusinessFlowFn         // 业务处理流程函数
+	RequestLineschema   string                 `json:"requestLineschema"`
+	ResponseLineschema  string                 `json:"responseLineschema"`
+	ResponseDefaultJson string                 `json:"responseDefaultJson"` // 返回数据默认值,一般填充协议字段如: code,message
+	PathTransfers       pathtransfer.Transfers `json:"pathTransfers"`
+	ErrorHandler        stream.ErrorHandler
+	PacketHandlers      packethandler.PacketHandlers
 }
 
 func (api Api) Key() string {
@@ -151,6 +152,9 @@ func (api *Api) Merge(mergedApi Api) (err error) {
 
 	if api.ErrorHandler == nil {
 		api.ErrorHandler = mergedApi.ErrorHandler
+	}
+	if api.businessFlowFn == nil {
+		api.businessFlowFn = mergedApi.businessFlowFn
 	}
 	//处理器池，采用合并方式
 	packethandlers := make(packethandler.PacketHandlers, 0)
@@ -227,16 +231,13 @@ func (api *Api) Init() (err error) {
 
 func (api *Api) InitPacketHandler() (err error) {
 	packetHandlers := packethandler.NewPacketHandlers()
-	err = lineschemapacket.RegisterClineschemaPacket(api)
-	if err != nil {
-		return err
-	}
 	//验证、格式化 入参
 	unpackClineschema, packClineschema, err := lineschemapacket.ParserLineschemaPacket2Clineschema(api)
 	if err != nil {
 		err = errors.WithMessage(err, "lineschemapacket.ParserLineschemaPacket2Clineschema")
 		return err
 	}
+	packClineschema.DefaultJson = []byte(api.ResponseDefaultJson) //只设置协议字段默认值
 	lineschemaPacketHandlers := lineschemapacket.ServerpacketHandlers(*unpackClineschema, *packClineschema)
 	packetHandlers.Append(lineschemaPacketHandlers...)
 	packetHandlers.Append(packet.NewJsonMergeInputPacket())                                     //增加合并输入数据

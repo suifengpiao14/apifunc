@@ -147,12 +147,13 @@ func (c *Container) RegisterTormByModels(tormModels TormModels, sourceModels Sou
 }
 
 // RegisterAPIByModel 通过模型注册路由
-func (c *Container) RegisterAPIByModel(apiModels ...ApiModel) {
+func (c *Container) RegisterAPIByModel(responseDefaultJson []byte, apiModels ...ApiModel) {
 	if c.apis == nil {
 		c.apis = make(Apis, 0)
 	}
 	for _, apiModel := range apiModels {
 		api := apiModel.Api()
+		api.ResponseDefaultJson = string(responseDefaultJson)
 		c.apis.AddMerge(api)
 	}
 }

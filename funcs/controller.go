@@ -19,7 +19,7 @@ func Pagination(ctx context.Context, totalTorm torm.Torm, listTorm torm.Torm, in
 	}
 	total := cast.ToInt(totalStr)
 	if total == 0 {
-		return nil, nil
+		return totalJson, nil
 	}
 	paginationJson, err := listTorm.Run(ctx, input)
 	if err != nil {

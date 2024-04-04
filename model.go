@@ -57,7 +57,7 @@ func (deps Dependents) Fullnames() (fullnames []string) {
 	return fullnames
 }
 
-//First 获取第一个
+// First 获取第一个
 func (deps Dependents) First() (fullname string) {
 	for _, d := range deps {
 		return d.Fullname
@@ -87,7 +87,7 @@ type ApiModel struct {
 	Flow             string                    `json:"flow"`
 }
 
-//Api 转为API
+// Api 转为API
 func (apiModel ApiModel) Api() (api Api) {
 	flows := packethandler.Flow(strings.Split(strings.TrimSpace(apiModel.Flow), ","))
 	flows.DropEmpty()
@@ -135,7 +135,7 @@ type SourceModel struct {
 
 type SourceModels []SourceModel
 
-//FillDDL 填充DDL
+// FillDDL 填充DDL
 func (ss *SourceModels) FillDDL() (err error) {
 	for i, sourceModel := range *ss {
 		if sourceModel.DDL != "" {
@@ -209,7 +209,7 @@ func (tModels TormModels) GroupBySourceId() (out map[string]TormModels) {
 	return out
 }
 
-//GetTpl 包含所有define，当使用子模板时有效
+// GetTpl 包含所有define，当使用子模板时有效
 func (tModels TormModels) GetTpl() (tpl string) {
 	var w bytes.Buffer
 	for _, t := range tModels {
@@ -219,7 +219,7 @@ func (tModels TormModels) GetTpl() (tpl string) {
 	return w.String()
 }
 
-//GetTpl 包含所有define，当使用子模板时有效
+// GetTpl 包含所有define，当使用子模板时有效
 func (tModels TormModels) GetTransferLine() (transferLine pathtransfer.TransferLine) {
 	var w bytes.Buffer
 	for _, t := range tModels {
