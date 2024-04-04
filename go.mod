@@ -10,11 +10,11 @@ require (
 	github.com/suifengpiao14/glob v0.0.4
 	github.com/suifengpiao14/goscript v0.0.4
 	github.com/suifengpiao14/logchan/v2 v2.0.24
-	github.com/suifengpiao14/packethandler v0.0.5
-	github.com/suifengpiao14/pathtransfer v0.0.13
+	github.com/suifengpiao14/packethandler v0.0.6
+	github.com/suifengpiao14/pathtransfer v0.0.14
 	github.com/suifengpiao14/sqlexec v0.0.31
-	github.com/suifengpiao14/sshmysql v0.0.5
-	github.com/suifengpiao14/stream v0.0.69
+	github.com/suifengpiao14/sshmysql v0.0.6
+	github.com/suifengpiao14/stream v0.0.70
 	github.com/suifengpiao14/torm v0.0.39
 	github.com/tidwall/gjson v1.17.1
 	github.com/tidwall/sjson v1.2.5

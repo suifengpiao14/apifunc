@@ -240,9 +240,9 @@ func (api *Api) InitPacketHandler() (err error) {
 	packClineschema.DefaultJson = []byte(api.ResponseDefaultJson) //只设置协议字段默认值
 	lineschemaPacketHandlers := lineschemapacket.ServerpacketHandlers(*unpackClineschema, *packClineschema)
 	packetHandlers.Append(lineschemaPacketHandlers...)
-	packetHandlers.Append(packet.NewJsonMergeInputPacket())                                     //增加合并输入数据
-	namespaceInput := fmt.Sprintf("%s%s", api.ApiName, pathtransfer.Transfer_Direction_input)   // 去除命名空间
-	namespaceOutput := fmt.Sprintf("%s%s", api.ApiName, pathtransfer.Transfer_Direction_output) // 去除命名空间
+	packetHandlers.Append(packet.NewJsonMergeInputPacket())                                                                                //增加合并输入数据
+	namespaceInput := fmt.Sprintf("%s%s%s", pathtransfer.Transfer_Top_Namespace_API, api.ApiName, pathtransfer.Transfer_Direction_input)   // 去除命名空间
+	namespaceOutput := fmt.Sprintf("%s%s%s", pathtransfer.Transfer_Top_Namespace_API, api.ApiName, pathtransfer.Transfer_Direction_output) // 去除命名空间
 	inputPathTransfers, outputPathTransfers := api.PathTransfers.SplitInOut()
 	inputTransfer := inputPathTransfers.ModifySrcPath(func(path pathtransfer.Path) (newPath pathtransfer.Path) {
 		return path.TrimNamespace(namespaceInput)
