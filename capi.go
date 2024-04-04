@@ -209,6 +209,14 @@ func (api Api) PackSchema() (lineschema string) {
 }
 
 func (api *Api) Init() (err error) {
+	if api.ApiName == "" {
+		err = errors.Errorf("api name required,api key:%s", api.Key())
+		return err
+	}
+	if strings.EqualFold(api.Key(), apiKey("", "")) {
+		err = errors.Errorf("api method,path required,api name:%s", api.Key())
+		return err
+	}
 	err = api.InitPacketHandler()
 	if err != nil {
 		return err

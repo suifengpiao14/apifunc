@@ -14,7 +14,7 @@ require (
 	github.com/suifengpiao14/pathtransfer v0.0.13
 	github.com/suifengpiao14/sqlexec v0.0.31
 	github.com/suifengpiao14/sshmysql v0.0.5
-	github.com/suifengpiao14/stream v0.0.68
+	github.com/suifengpiao14/stream v0.0.69
 	github.com/suifengpiao14/torm v0.0.39
 	github.com/tidwall/gjson v1.17.1
 	github.com/tidwall/sjson v1.2.5
