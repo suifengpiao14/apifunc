@@ -95,7 +95,7 @@ type Api struct {
 	Route              string                 `json:"route"`
 	Method             string                 `json:"method"`
 	Flow               packethandler.Flow     `json:"flow"` // 按顺序组装执行流程
-	BusinessFlowFn     BusinessFlowFn         // 业务处理流程函数
+	businessFlowFn     BusinessFlowFn         // 业务处理流程函数
 	RequestLineschema  string                 `json:"requestLineschema"`
 	ResponseLineschema string                 `json:"responseLineschema"`
 	PathTransfers      pathtransfer.Transfers `json:"pathTransfers"`
@@ -138,9 +138,6 @@ func (api *Api) Merge(mergedApi Api) (err error) {
 	}
 	if len(api.Flow) == 0 {
 		api.Flow = mergedApi.Flow
-	}
-	if api.BusinessFlowFn == nil {
-		api.BusinessFlowFn = mergedApi.BusinessFlowFn
 	}
 	if api.RequestLineschema == "" {
 		api.RequestLineschema = mergedApi.RequestLineschema
@@ -250,7 +247,7 @@ func (api *Api) InitPacketHandler() (err error) {
 	packetHandlers.Append(transferHandler)
 	//注入逻辑处理函数
 	logicFuncName := fmt.Sprintf("%s%s", ApiLogicFuncNamePrefix, api.ApiName)
-	packetHandlers.Append(NewApiLogicFuncPacketHandler(logicFuncName, api.BusinessFlowFn))
+	packetHandlers.Append(NewApiLogicFuncPacketHandler(logicFuncName, api.businessFlowFn))
 	api.PacketHandlers = packetHandlers
 
 	return

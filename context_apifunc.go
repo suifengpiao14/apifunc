@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/torm"
 )
 
@@ -90,16 +89,9 @@ func (ctxApiFunc *ContextApiFunc) RunTorm(tormName string, input []byte) (out []
 	return out, nil
 }
 
-func (ctxApiFunc *ContextApiFunc) SetApiFlow(flow packethandler.Flow) {
-	ctxApiFunc._Api.Flow = flow
-}
-
-func (ctxApiFunc *ContextApiFunc) SetPackethandlers(packethandlers packethandler.PacketHandlers) {
-	ctxApiFunc._Api.PacketHandlers = packethandlers
-}
-
-func (ctxApiFunc *ContextApiFunc) GetPackethandlers() (packethandlers packethandler.PacketHandlers) {
-	return ctxApiFunc._Api.PacketHandlers
+// Api 代码中需要修正入参,需要api提供命名空间的增减
+func (ctxApiFunc *ContextApiFunc) Api() (api Api) {
+	return ctxApiFunc._Api
 }
 
 func (ctxApiFunc *ContextApiFunc) Torms() (torms torm.Torms) {

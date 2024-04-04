@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/suifengpiao14/goscript"
 	"github.com/suifengpiao14/logchan/v2"
+	"github.com/suifengpiao14/packethandler"
 	"github.com/suifengpiao14/pathtransfer"
 	"github.com/suifengpiao14/stream/packet"
 	"github.com/suifengpiao14/torm"
@@ -35,7 +36,7 @@ func (c *Container) RegisterAPI(api Api) {
 	c.apis.AddMerge(api)
 }
 
-//Compile 只会执行一次
+// Compile 只会执行一次
 func (c *Container) Compile() (err error) {
 	c.compiled.Do(func() {
 		//初始化api
@@ -67,19 +68,25 @@ func (c *Container) Compile() (err error) {
 	return nil
 }
 
-// RegisterAPIBusinessFlow 业务流程处理函数需要提前注册，方便编译时从这里取
-func (c *Container) RegisterAPIBusinessFlow(method string, route string, logicHandler BusinessFlowFn) {
+func (c *Container) RegisterAPIFlow(method string, route string, flow packethandler.Flow, businessFlowFn BusinessFlowFn, packetHandlers ...packethandler.PacketHandlerI) {
+
+	if len(packetHandlers) == 0 {
+		packetHandlers = packethandler.NewPacketHandlers()
+	}
+
 	api := Api{
 		Method:         method,
 		Route:          route,
-		BusinessFlowFn: logicHandler,
+		Flow:           flow,
+		businessFlowFn: businessFlowFn,
+		PacketHandlers: packetHandlers,
 	}
 	c.apis.AddMerge(api)
 }
 
 var ERROR_NOT_FOUND_API = errors.New("not found api")
 
-//GetContextApiFunc  根据route，method获取特定api执行上下文
+// GetContextApiFunc  根据route，method获取特定api执行上下文
 func (c *Container) GetContextApiFunc(route string, method string) (contextApiFunc *ContextApiFunc, err error) {
 	api, err := c.apis.GetByRoute(route, method)
 	if err != nil {
@@ -98,7 +105,7 @@ func (c *Container) setLogger(fn func(logInfo logchan.LogInforInterface, typeNam
 	logchan.SetLoggerWriter(fn)
 }
 
-//RegisterProject 注册项目
+// RegisterProject 注册项目
 func (c *Container) RegisterProject(scriptLanguage string, scriptEngines goscript.ScriptIs, transferFuncModels TransferFuncModels) {
 	project := Project{
 		CurrentLanguage: scriptLanguage,
@@ -118,7 +125,7 @@ func (c *Container) RegisterProject(scriptLanguage string, scriptEngines goscrip
 	c.project = project
 }
 
-//RegisterTorms 注册torm
+// RegisterTorms 注册torm
 func (c *Container) RegisterTormByModels(tormModels TormModels, sourceModels SourceModels) (err error) {
 	if c.torms == nil {
 		c.torms = make(torm.Torms, 0)
